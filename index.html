@@ -512,6 +512,27 @@
     .settings-hint { margin: 12px 0 0 !important; color: var(--muted); font-size: 10px !important; }
     .settings-status { min-height: 17px; margin: 16px 0 0 !important; color: var(--green); font-size: 11px !important; }
     .settings-status[data-state="error"] { color: #a44230; }
+    .donation-panel {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 24px;
+      max-width: 760px;
+      padding: 30px;
+    }
+    .donation-icon {
+      width: 68px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      border-radius: 20px;
+      background: color-mix(in srgb, var(--orange) 13%, var(--white));
+      color: var(--orange);
+    }
+    .donation-icon svg { width: 34px; height: 34px; }
+    .donation-copy h2 { margin-bottom: 8px; font-size: 23px; }
+    .donation-copy > p:not(.eyebrow) { max-width: 520px; margin-bottom: 17px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+    .donation-link { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
     .catalog-search {
       margin: 20px 0 0;
       padding: 16px;
@@ -861,7 +882,7 @@
       .sidebar-brand { display: flex; justify-content: flex-start; margin: 0 0 10px; }
       .sidebar-brand-copy { display: grid; }
       .sidebar-section-label, .sidebar-note { display: none; }
-      .sidebar-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0 0 9px; }
+      .sidebar-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0 0 9px; }
       .sidebar-link { width: auto; min-width: 0; min-height: 54px; flex-direction: column; justify-content: center; gap: 3px; padding: 5px 2px; font-size: 9px; white-space: normal; }
       .sidebar-link svg { width: 17px; height: 17px; }
       .sidebar-link-label { display: block; flex: none; line-height: 1.1; text-align: center; }
@@ -901,6 +922,8 @@
       .progress-chart-card { padding: 18px 16px 15px; }
       .settings-grid, .palette-options, .preference-grid { grid-template-columns: 1fr; }
       .settings-card-wide { grid-column: auto; }
+      .donation-panel { grid-template-columns: 1fr; gap: 15px; padding: 22px; }
+      .donation-icon { width: 56px; height: 56px; border-radius: 16px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
@@ -942,6 +965,10 @@
         <a class="sidebar-link" href="#settings-view" aria-label="Configuración">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.6 2.77-.08-.03a1.7 1.7 0 0 0-1.82.35l-.05.04h-3.2l-.02-.08a1.7 1.7 0 0 0-1.35-1.31l-.08-.02-1.6-2.77.06-.06A1.7 1.7 0 0 0 10.4 14l-.03-.08v-3.2l.08-.02a1.7 1.7 0 0 0 1.31-1.35l.02-.08 2.77-1.6.06.06a1.7 1.7 0 0 0 1.88.34l.06-.03 2.77 1.6-.03.08a1.7 1.7 0 0 0 .35 1.82l.04.05v3.2l-.08.02a1.7 1.7 0 0 0-1.31 1.35z"></path></svg>
           <span class="sidebar-link-label">Configuración</span>
+        </a>
+        <a class="sidebar-link" href="#donation-view" aria-label="Donar al proyecto">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path></svg>
+          <span class="sidebar-link-label">Donar</span>
         </a>
       </nav>
       <button class="install-app-button" id="install-app" type="button" aria-label="Instalar Entre Líneas" hidden>
@@ -1242,6 +1269,27 @@
         </article>
       </div>
       <p class="settings-status" id="settings-status" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="page-view" id="donation-view" aria-labelledby="donation-title" hidden>
+      <div class="page-view-heading">
+        <p class="eyebrow">Apoya el proyecto</p>
+        <h1 id="donation-title">Una pequeña ayuda hace la diferencia</h1>
+        <p>Si disfrutas de Entre Líneas, puedes apoyar su desarrollo y futuras mejoras.</p>
+      </div>
+      <article class="panel donation-panel">
+        <span class="donation-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path></svg>
+        </span>
+        <div class="donation-copy">
+          <p class="eyebrow">Gracias por leer con nosotros</p>
+          <h2>Invítanos un café en Ko-fi</h2>
+          <p>Tu apoyo es voluntario y ayuda a mantener este espacio de lectura creciendo.</p>
+          <a class="button button-primary donation-link" href="https://ko-fi.com/direworld" target="_blank" rel="noopener noreferrer">
+            Apoyar en Ko-fi <span aria-hidden="true">↗</span>
+          </a>
+        </div>
+      </article>
     </section>
       </main>
     </div>

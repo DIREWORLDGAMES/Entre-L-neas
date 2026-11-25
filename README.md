@@ -36,10 +36,12 @@ La ruta base se detecta automáticamente a partir del nombre del repositorio, po
 
 El catálogo consulta Open Library, Wikidata y Google Books cuando hace falta. Los datos de la biblioteca siguen guardándose en el navegador.
 
-Cada opción del menú abre una vista independiente: Inicio, Biblioteca, Progreso, Temporizador, Agregar libro y Configuración.
+Cada opción del menú abre una vista independiente: Inicio, Biblioteca, Progreso, Temporizador, Agregar libro, Configuración y Donar.
 
 El apartado **Progreso** muestra el tiempo de lectura acumulado y las páginas leídas por libro. Puedes registrar páginas manualmente o elegir la página inicial en el temporizador y la final al guardar una sesión; puedes añadir el total de páginas para validar el avance.
 
 En **Agregar libro** puedes buscar por título o autor en Google Books y Open Library, o registrar un libro manualmente sin ISBN. Al buscar, los nombres de autores en otros alfabetos se contrastan con sus formas en español y sus variantes latinas cuando están disponibles. Cada resultado también permite abrir la búsqueda correspondiente en Amazon para consultar allí las opciones de compra y su disponibilidad. Los resultados del catálogo se pueden añadir como pendientes o a **Deseados**. La biblioteca permite filtrar la lista de deseados; sus libros no aparecen como opciones para iniciar una sesión de lectura.
 
 En **Configuración** puedes elegir entre las paletas Librería, Bosque y Océano, cambiar entre tipografía moderna y clásica, ajustar el espacio de las tarjetas de biblioteca y reducir el movimiento. Las preferencias se guardan en el dispositivo. También puedes descargar un respaldo JSON con la biblioteca, la sesión del temporizador y todas las opciones de apariencia, y restaurarlo en este u otro dispositivo; la importación reemplaza los datos actuales después de confirmarlo.
+
+El apartado **Donar** abre la página de Ko-fi para quienes quieran apoyar voluntariamente el proyecto.
