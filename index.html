@@ -1,0 +1,1267 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" id="theme-color" content="#39251e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Entre Líneas">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png">
+  <link rel="apple-touch-icon" href="/icons/icon-180.png">
+  <title>Entre Líneas — Tu biblioteca personal</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f2e8d9;
+      --white: #fff9ee;
+      --ink: #392a22;
+      --muted: #806d5d;
+      --line: #dfcfb9;
+      --green: #75483a;
+      --green-dark: #39251e;
+      --lime: #d4ad67;
+      --orange: #b86f4d;
+      --shadow: 0 15px 40px rgb(65 42 27 / 10%);
+      --paper-texture: rgb(105 76 48 / 5%);
+      --sidebar-start: #2e1e19;
+      --sidebar-mid: #462d23;
+      --sidebar-end: #35231d;
+      --hero-start: #765040;
+      --hero-mid: #55382e;
+      --hero-end: #39251e;
+      --hero-glow: rgb(212 173 103 / 15%);
+      font-family: "DM Sans", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    :root[data-palette="bosque"] {
+      --paper: #e8eee8;
+      --white: #f8fbf8;
+      --ink: #29372d;
+      --muted: #657568;
+      --line: #cbd7cd;
+      --green: #496d53;
+      --green-dark: #263f31;
+      --lime: #bed2aa;
+      --orange: #9c7150;
+      --paper-texture: rgb(58 91 66 / 5%);
+      --sidebar-start: #1e3528;
+      --sidebar-mid: #35553c;
+      --sidebar-end: #294330;
+      --hero-start: #577a5b;
+      --hero-mid: #3d6244;
+      --hero-end: #263f31;
+      --hero-glow: rgb(190 210 170 / 17%);
+    }
+
+    :root[data-palette="oceano"] {
+      --paper: #e8eff3;
+      --white: #f7fafc;
+      --ink: #283742;
+      --muted: #647887;
+      --line: #cad8e1;
+      --green: #426b83;
+      --green-dark: #213f55;
+      --lime: #a7ccd8;
+      --orange: #a16d52;
+      --paper-texture: rgb(58 99 128 / 5%);
+      --sidebar-start: #1c3446;
+      --sidebar-mid: #2d5069;
+      --sidebar-end: #233f54;
+      --hero-start: #527890;
+      --hero-mid: #3b627a;
+      --hero-end: #213f55;
+      --hero-glow: rgb(167 204 216 / 18%);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: var(--paper);
+      background-image: radial-gradient(var(--paper-texture) .55px, transparent .55px);
+      background-size: 7px 7px;
+      color: var(--ink);
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 252px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 29px 17px 20px;
+      background-color: var(--green-dark);
+      background-image:
+        repeating-linear-gradient(0deg, transparent 0 150px, rgb(15 8 5 / 24%) 151px, rgb(212 173 103 / 20%) 155px, transparent 160px),
+        repeating-linear-gradient(92deg, rgb(255 255 255 / 2%) 0 1px, transparent 1px 13px),
+        linear-gradient(90deg, var(--sidebar-start), var(--sidebar-mid) 50%, var(--sidebar-end));
+      color: var(--white);
+    }
+
+    .sidebar-brand {
+      margin: 0 5px 43px;
+      color: var(--white);
+    }
+
+    .sidebar-brand:hover { color: var(--white); }
+    .sidebar-brand-copy { display: grid; gap: 4px; }
+    .sidebar-brand-copy strong { font-size: 17px; line-height: 1; }
+    .sidebar-brand-copy small { color: rgb(255 254 250 / 47%); font-family: "DM Sans", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1.4px; }
+    .sidebar-section-label { margin: 0 11px 12px; color: rgb(255 254 250 / 40%); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; }
+    .sidebar-nav { display: grid; gap: 6px; }
+    .sidebar-link {
+      min-height: 47px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 12px;
+      border-radius: 11px;
+      color: rgb(255 254 250 / 70%);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background .16s, color .16s, transform .16s;
+    }
+    .sidebar-link:hover { background: rgb(255 255 255 / 7%); color: var(--white); transform: translateX(2px); }
+    .sidebar-link:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .sidebar-link[aria-current="page"] { background: var(--lime); color: var(--green-dark); }
+    .sidebar-link svg { width: 18px; height: 18px; flex: 0 0 auto; }
+    .sidebar-link-label { flex: 1; }
+    .install-app-button {
+      display: flex;
+      min-height: 42px;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin-top: 15px;
+      padding: 0 12px;
+      border: 1px solid rgb(255 255 255 / 20%);
+      border-radius: 11px;
+      background: rgb(255 255 255 / 7%);
+      color: var(--white);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .install-app-button:hover { background: rgb(255 255 255 / 13%); }
+    .install-app-button:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+    .install-app-button svg { width: 17px; height: 17px; flex: 0 0 auto; }
+    .install-app-button[hidden] { display: none !important; }
+    .sidebar-count {
+      min-width: 22px;
+      padding: 3px 6px;
+      border-radius: 7px;
+      background: rgb(255 255 255 / 9%);
+      color: inherit;
+      font-size: 10px;
+      text-align: center;
+    }
+    .sidebar-link[aria-current="page"] .sidebar-count { background: rgb(57 37 30 / 12%); }
+    .sidebar-note {
+      position: relative;
+      overflow: hidden;
+      margin-top: auto;
+      padding: 17px 15px;
+      border: 1px solid rgb(255 255 255 / 9%);
+      border-radius: 15px;
+      background: linear-gradient(145deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 3%));
+    }
+    .sidebar-note::after {
+      position: absolute;
+      right: -24px;
+      bottom: -34px;
+      width: 90px;
+      height: 90px;
+      border: 1px solid rgb(255 255 255 / 9%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 13px rgb(255 255 255 / 3%);
+      content: "";
+    }
+    .sidebar-note-icon { display: block; margin-bottom: 12px; color: var(--lime); font-size: 19px; }
+    .sidebar-note strong { display: block; margin-bottom: 5px; font-family: "Playfair Display", Georgia, serif; font-size: 15px; font-weight: 500; }
+    .sidebar-note p { max-width: 175px; margin: 0; color: rgb(255 254 250 / 56%); font-size: 10px; line-height: 1.5; }
+
+    .page-shell { min-width: 0; }
+
+    .topbar {
+      height: 76px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 max(5vw, calc((100vw - 1200px) / 2));
+      border-bottom: 2px solid var(--lime);
+      background: color-mix(in srgb, var(--white) 92%, transparent);
+    }
+
+    .topbar-context { color: var(--orange); font-size: 11px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--ink);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 21px;
+      font-weight: 700;
+      letter-spacing: -.5px;
+      text-decoration: none;
+    }
+
+    .brand.sidebar-brand { color: var(--white); }
+    .brand.sidebar-brand:hover { color: var(--white); }
+
+    .topbar-right { display: flex; align-items: center; gap: 18px; }
+    .today { color: var(--muted); font-size: 13px; }
+
+    main { width: min(1120px, calc(100% - 64px)); margin: 0 auto; padding: 42px 0 72px; }
+    .page-view[hidden] { display: none !important; }
+    .page-view-heading { margin-bottom: 22px; }
+    .page-view-heading .eyebrow { margin-bottom: 8px; }
+    .page-view-heading h1 { margin-bottom: 7px; }
+    .page-view-heading > p:last-child { margin-bottom: 0; color: var(--muted); font-size: 14px; }
+
+    .welcome {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 30px;
+      padding: 30px;
+      border: 1px solid var(--orange);
+      border-radius: 20px;
+      background: radial-gradient(circle at 90% 15%, var(--hero-glow), transparent 32%), linear-gradient(135deg, var(--hero-start), var(--hero-mid) 60%, var(--hero-end));
+      box-shadow: 0 18px 35px rgb(65 42 27 / 15%);
+      color: var(--white);
+    }
+    .welcome::after {
+      position: absolute;
+      right: 24px;
+      top: 16px;
+      width: 112px;
+      height: 18px;
+      border-bottom: 3px solid color-mix(in srgb, var(--lime) 55%, transparent);
+      background: repeating-linear-gradient(90deg, rgb(255 249 238 / 17%) 0 8px, transparent 8px 17px);
+      content: "";
+      z-index: 0;
+      pointer-events: none;
+    }
+    .welcome > * { position: relative; z-index: 1; }
+    .welcome .eyebrow { color: var(--lime); }
+    .welcome .subtitle { color: rgb(255 249 238 / 76%); }
+    .welcome .stat { border-color: rgb(255 249 238 / 22%); background: rgb(255 249 238 / 18%); color: var(--white); }
+    .welcome .stat span { color: rgb(255 249 238 / 68%); }
+    .welcome .stat strong { color: #fffaf0; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--orange);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2, h3 { font-family: "Playfair Display", Georgia, serif; }
+    h1 { margin-bottom: 8px; font-size: clamp(32px, 4vw, 43px); letter-spacing: -1.1px; }
+    .subtitle { margin-bottom: 0; color: var(--muted); font-size: 14px; }
+
+    .stats { display: flex; gap: 10px; }
+    .stat {
+      min-width: 113px;
+      padding: 13px 15px 12px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: var(--white);
+    }
+    .stat strong { display: block; margin-bottom: 2px; font-size: 21px; font-weight: 600; }
+    .stat span { color: var(--muted); font-size: 11px; }
+
+    .home-shortcuts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .home-shortcut {
+      display: flex;
+      min-width: 0;
+      min-height: 92px;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      border: 1px solid #dfcfb9;
+      border-bottom: 5px solid #a47a51;
+      border-radius: 12px;
+      background: linear-gradient(180deg, #fffaf1, #f8efdf);
+      color: var(--ink);
+      text-decoration: none;
+      transition: border-color .2s, transform .2s, box-shadow .2s;
+    }
+    .home-shortcut:hover {
+      transform: translateY(-2px);
+      border-color: #b8c2ad;
+      box-shadow: var(--shadow);
+    }
+    .shortcut-icon {
+      display: grid;
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      place-items: center;
+      border-radius: 12px;
+      background: #efe2c9;
+      color: #75483a;
+      font-size: 20px;
+    }
+    .shortcut-copy { display: grid; min-width: 0; gap: 4px; }
+    .shortcut-copy strong { font-size: 13px; font-weight: 650; }
+    .shortcut-copy small { color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .shortcut-arrow { margin-left: auto; color: #9a6e45; font-size: 16px; }
+
+    .page-view:not(.home-view) {
+      animation: view-enter .2s ease-out;
+    }
+    @keyframes view-enter { from { opacity: .7; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+
+    .timer-panel {
+      position: relative;
+      width: min(100%, 760px);
+      min-height: 340px;
+      margin: 0 auto;
+      overflow: hidden;
+      padding: 26px 28px;
+      border: 0;
+      background: radial-gradient(circle at 90% 10%, var(--hero-glow), transparent 34%), linear-gradient(135deg, var(--green), var(--green-dark));
+      color: #fffefa;
+    }
+
+    .timer-panel::after {
+      position: absolute;
+      right: -54px;
+      bottom: -96px;
+      width: 245px;
+      height: 245px;
+      border: 1px solid rgb(255 255 255 / 9%);
+      border-radius: 50%;
+      box-shadow: 0 0 0 30px rgb(255 255 255 / 3%), 0 0 0 60px rgb(255 255 255 / 2%);
+      content: "";
+      pointer-events: none;
+    }
+
+    .panel-heading { display: flex; align-items: center; justify-content: space-between; }
+    .timer-panel .eyebrow { color: var(--lime); }
+    .timer-label { margin-bottom: 0; color: rgb(255 255 255 / 72%); font-size: 12px; }
+    .timer-select {
+      width: 100%;
+      margin: 19px 0 14px;
+      padding: 11px 35px 11px 12px;
+      border: 1px solid rgb(255 255 255 / 24%);
+      border-radius: 10px;
+      outline: none;
+      background: rgb(255 255 255 / 9%);
+      color: #fffefa;
+    }
+    .timer-select:focus { border-color: var(--lime); }
+    .timer-select:disabled { opacity: .75; }
+    .timer-select option { background: var(--green); color: #fffefa; }
+    .timer-page-control { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 14px; }
+    .timer-page-control label { margin: 0; color: rgb(255 255 255 / 73%); font-size: 11px; }
+    .timer-page-control input {
+      width: 88px;
+      height: 34px;
+      border-color: rgb(255 255 255 / 24%);
+      background: rgb(255 255 255 / 9%);
+      color: var(--white);
+      font-variant-numeric: tabular-nums;
+    }
+    .timer-page-control input:focus { border-color: var(--lime); box-shadow: 0 0 0 3px rgb(212 173 103 / 18%); }
+    .timer-page-control input:disabled { opacity: .7; }
+    .timer-page-control input::-webkit-inner-spin-button { opacity: 1; }
+
+    .timer-content { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+    .timer-display {
+      margin: 2px 0 13px;
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(42px, 5vw, 59px);
+      font-weight: 500;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+    .timer-book-title {
+      max-width: 245px;
+      overflow: hidden;
+      margin-bottom: 0;
+      color: rgb(255 255 255 / 76%);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .timer-icon {
+      width: 86px;
+      height: 86px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgb(255 255 255 / 16%);
+      border-radius: 50%;
+      background: rgb(255 255 255 / 7%);
+      color: var(--lime);
+      font-size: 31px;
+    }
+
+    .timer-actions { position: relative; z-index: 1; display: flex; gap: 9px; margin-top: 22px; }
+    .button {
+      min-height: 39px;
+      padding: 0 16px;
+      border: 1px solid transparent;
+      border-radius: 9px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: transform .15s, background .15s;
+    }
+    .button:hover { transform: translateY(-1px); }
+    .button-primary { background: var(--lime); color: var(--green-dark); }
+    .button-primary:hover { background: #e2c481; }
+    .button-light { border-color: rgb(255 255 255 / 25%); background: transparent; color: white; }
+    .button-light:hover { background: rgb(255 255 255 / 9%); }
+    .button-quiet { border-color: var(--line); background: var(--white); color: var(--ink); }
+    .button-quiet:hover { background: #f3e8d5; }
+    .button:disabled { cursor: not-allowed; opacity: .5; transform: none; }
+    .timer-hint { position: relative; z-index: 1; margin: 12px 0 0; color: rgb(255 255 255 / 56%); font-size: 10px; }
+
+    .form-panel { width: min(100%, 760px); margin: 0 auto; padding: 25px 26px; }
+    .form-panel h2, .section-title { margin-bottom: 5px; font-size: 22px; letter-spacing: -.4px; }
+    .form-intro { margin-bottom: 20px; color: var(--muted); font-size: 12px; }
+    .settings-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .settings-card { padding: 22px; }
+    .settings-card-wide { grid-column: 1 / -1; }
+    .settings-card h2 { margin-bottom: 7px; font-size: 19px; }
+    .settings-card > p { margin-bottom: 17px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .palette-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .palette-option {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0;
+      padding: 11px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--white);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .palette-option:has(input:checked) { border-color: var(--green); box-shadow: 0 0 0 2px color-mix(in srgb, var(--green) 15%, transparent); }
+    .palette-option input[type="radio"] { width: 15px; height: 15px; flex: 0 0 auto; margin: 0; accent-color: var(--green); }
+    .palette-swatch { width: 34px; height: 34px; flex: 0 0 auto; border: 1px solid rgb(0 0 0 / 8%); border-radius: 9px; }
+    .palette-swatch-library { background: linear-gradient(135deg, #75483a 0 38%, #d4ad67 38% 58%, #f2e8d9 58%); }
+    .palette-swatch-forest { background: linear-gradient(135deg, #496d53 0 38%, #bed2aa 38% 58%, #e8eee8 58%); }
+    .palette-swatch-ocean { background: linear-gradient(135deg, #426b83 0 38%, #a7ccd8 38% 58%, #e8eff3 58%); }
+    .palette-option-copy { min-width: 0; display: grid; gap: 3px; }
+    .palette-option-copy strong { font-size: 11px; }
+    .palette-option-copy small { color: var(--muted); font-size: 9px; font-weight: 400; }
+    .settings-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .settings-hint { margin: 12px 0 0 !important; color: var(--muted); font-size: 10px !important; }
+    .settings-status { min-height: 17px; margin: 16px 0 0 !important; color: var(--green); font-size: 11px !important; }
+    .settings-status[data-state="error"] { color: #a44230; }
+    .catalog-search {
+      margin: 20px 0 0;
+      padding: 16px;
+      border: 1px solid #dfcfb9;
+      border-radius: 13px;
+      background: #f7efe2;
+    }
+    .catalog-search-status { min-height: 16px; margin: 9px 0 0; color: var(--muted); font-size: 11px; }
+    .catalog-search-status[data-state="error"] { color: #a44230; }
+    .catalog-search-note { margin: 2px 0 10px; color: #8d7964; font-size: 10px; }
+    .amazon-search-link, .catalog-result-amazon {
+      color: #80513a;
+      font-size: 10px;
+      font-weight: 700;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    .amazon-search-link { display: inline-flex; margin: 0 0 10px; }
+    .amazon-search-link[hidden] { display: none; }
+    .catalog-result-amazon { display: inline-block; margin-top: 5px; }
+    .catalog-search-results { display: grid; gap: 9px; }
+    .catalog-result {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 11px;
+      padding: 11px;
+      border: 1px solid #e6d9c6;
+      border-radius: 10px;
+      background: var(--white);
+    }
+    .catalog-result-cover {
+      width: 48px;
+      height: 68px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 4px 7px 7px 4px;
+      background: #805345;
+      box-shadow: inset 4px 0 rgb(0 0 0 / 13%), 2px 3px 6px rgb(65 42 27 / 15%);
+      color: var(--white);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 20px;
+    }
+    .catalog-result-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .catalog-result-info { min-width: 0; }
+    .catalog-result-info h3 { margin: 0 0 4px; font-size: 14px; line-height: 1.25; }
+    .catalog-result-info p { margin: 0 0 4px; color: var(--muted); font-size: 10px; }
+    .catalog-result-info small { color: #987b5f; font-size: 9px; }
+    .catalog-result-actions { display: flex; flex-direction: column; gap: 5px; }
+    .catalog-result-actions .button { min-height: 31px; padding: 0 10px; font-size: 10px; white-space: nowrap; }
+    .catalog-result-actions .button:disabled { opacity: .65; }
+    .manual-entry-divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 21px 0 15px;
+      color: #927a62;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .4px;
+      text-transform: uppercase;
+    }
+    .manual-entry-divider::before, .manual-entry-divider::after { height: 1px; flex: 1; background: var(--line); content: ""; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 11px; }
+    .field { min-width: 0; }
+    .field-full { grid-column: 1 / -1; }
+    label { display: block; margin-bottom: 6px; color: #6f5746; font-size: 11px; font-weight: 600; }
+    .isbn-entry { display: flex; gap: 8px; }
+    .isbn-entry input { min-width: 0; flex: 1; }
+    .scan-button { flex: 0 0 auto; padding: 0 12px; }
+    input, .status-select {
+      width: 100%;
+      height: 39px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      outline: none;
+      background: #fffefa;
+      color: var(--ink);
+      font-size: 12px;
+    }
+    input:focus, .status-select:focus { border-color: #b38a54; box-shadow: 0 0 0 3px rgb(179 138 84 / 16%); }
+    input::placeholder { color: #a4a69e; }
+    .form-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 15px; }
+    .form-note { margin: 0; color: var(--muted); font-size: 10px; }
+    .form-error { min-height: 15px; margin: 8px 0 0; color: #a44230; font-size: 11px; }
+    .form-status { min-height: 15px; margin: 8px 0 0; color: #657461; font-size: 11px; }
+    .form-status[data-state="error"] { color: #a44230; }
+
+    .scanner-dialog {
+      width: min(460px, calc(100vw - 32px));
+      padding: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: 0 24px 80px rgb(22 31 25 / 25%);
+      color: var(--ink);
+    }
+    .scanner-dialog::backdrop { background: rgb(20 30 24 / 60%); backdrop-filter: blur(3px); }
+    .scanner-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 21px 22px 15px; }
+    .scanner-header h2 { margin: 0 0 5px; font-size: 22px; }
+    .scanner-header p { margin: 0; color: var(--muted); font-size: 12px; }
+    .scanner-close {
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      border: 0;
+      border-radius: 8px;
+      background: #f0efe8;
+      color: var(--ink);
+      font-size: 20px;
+    }
+    .scanner-video-wrap {
+      position: relative;
+      min-height: 220px;
+      margin: 0 18px;
+      overflow: hidden;
+      border-radius: 12px;
+      background: #19231d;
+    }
+    .scanner-video { width: 100%; min-height: 220px; display: block; object-fit: cover; }
+    .scanner-reticle {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: min(72%, 300px);
+      height: 72px;
+      border: 2px solid var(--lime);
+      border-radius: 8px;
+      box-shadow: 0 0 0 999px rgb(0 0 0 / 19%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+    .scanner-message { min-height: 38px; margin: 0; padding: 12px 22px 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .scanner-footer { display: flex; justify-content: flex-end; padding: 12px 18px 18px; }
+    .progress-dialog {
+      width: min(440px, calc(100vw - 32px));
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: 0 24px 80px rgb(22 31 25 / 25%);
+      color: var(--ink);
+    }
+    .progress-dialog::backdrop { background: rgb(20 30 24 / 60%); backdrop-filter: blur(3px); }
+    .progress-dialog-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 5px 22px 0; }
+    .progress-dialog-fields input { font-variant-numeric: tabular-nums; }
+    .progress-dialog-hint { margin: 10px 22px 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .progress-dialog-error { min-height: 17px; margin: 7px 22px 0; color: #a44230; font-size: 11px; }
+    .progress-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 22px 20px; }
+
+    .library-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 17px;
+    }
+    .library-header .eyebrow { margin-bottom: 6px; }
+    .library-header h2 { margin-bottom: 0; font-size: 27px; letter-spacing: -.5px; }
+    .library-tools { display: flex; gap: 9px; }
+    .wishlist-button {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      border-color: #d7c3a7;
+      background: #fffaf1;
+      color: #75483a;
+    }
+    .wishlist-button[aria-pressed="true"] { border-color: var(--green); background: var(--green); color: var(--white); }
+    .wishlist-count { min-width: 19px; padding: 2px 5px; border-radius: 999px; background: rgb(164 122 81 / 15%); font-size: 10px; text-align: center; }
+    .wishlist-button[aria-pressed="true"] .wishlist-count { background: rgb(255 249 238 / 18%); }
+    .search-wrap { position: relative; }
+    .search-wrap span { position: absolute; top: 10px; left: 11px; color: #9a8069; font-size: 14px; }
+    .search-input { width: 210px; padding-left: 32px; }
+    .filter-select { width: 132px; }
+
+    .progress-section { margin: 48px 0 20px; }
+    .progress-section-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+    .progress-section-header .eyebrow { margin-bottom: 6px; }
+    .progress-section-header h2 { margin: 0 0 5px; font-size: 27px; letter-spacing: -.5px; }
+    .progress-section-intro { margin: 0; color: var(--muted); font-size: 12px; }
+    .progress-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 15px; }
+    .progress-summary-card {
+      min-width: 0;
+      min-height: 132px;
+      padding: 18px 19px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .progress-summary-card:first-child { border-color: var(--green); background: var(--green); color: var(--white); }
+    .progress-summary-label { display: block; margin-bottom: 12px; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+    .progress-summary-card:first-child .progress-summary-label { color: rgb(255 249 238 / 72%); }
+    .progress-summary-value { display: block; margin-bottom: 5px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(24px, 3vw, 32px); line-height: 1; }
+    .progress-summary-detail { color: var(--muted); font-size: 10px; }
+    .progress-summary-card:first-child .progress-summary-detail { color: rgb(255 249 238 / 72%); }
+    .progress-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .progress-chart-card { min-width: 0; padding: 21px 22px 17px; }
+    .progress-chart-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
+    .progress-chart-heading h3 { margin: 0 0 4px; font-size: 17px; }
+    .progress-chart-heading p { margin: 0; color: var(--muted); font-size: 10px; }
+    .progress-chart-unit { padding: 5px 7px; border-radius: 6px; background: #efe3cf; color: #806d5d; font-size: 8px; font-weight: 700; letter-spacing: .8px; }
+    .chart-list { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+    .chart-row-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 10px; }
+    .chart-row-title { min-width: 0; overflow: hidden; color: #634b3b; text-overflow: ellipsis; white-space: nowrap; }
+    .chart-row-value { flex: 0 0 auto; color: var(--ink); font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .chart-track { height: 7px; overflow: hidden; border-radius: 999px; background: #eadfcf; }
+    .chart-fill { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #8b5140, #d4ad67); }
+    .chart-fill-pages { background: linear-gradient(90deg, #ad6546, #dda86a); }
+    .chart-empty { padding: 21px 12px; border: 1px dashed #d7c4aa; border-radius: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
+
+    .book-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+    .book-card {
+      position: relative;
+      min-height: 175px;
+      display: flex;
+      gap: 13px;
+      padding: 15px 13px;
+      border: 1px solid #d8c6ae;
+      border-bottom: 5px solid #a47a51;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #fffaf1, #fffaf1 calc(100% - 5px), #a47a51 calc(100% - 5px));
+      transition: box-shadow .18s, transform .18s;
+    }
+    .book-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+    .book-cover {
+      width: 56px;
+      min-width: 56px;
+      height: 84px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 5px 9px 9px 5px;
+      background: var(--cover, #805345);
+      box-shadow: inset 4px 0 rgb(0 0 0 / 14%), inset -2px 0 rgb(255 255 255 / 12%), 2px 3px 7px rgb(65 42 27 / 18%);
+      color: rgb(255 255 255 / 88%);
+      font-family: "Playfair Display", Georgia, serif;
+      font-size: 22px;
+    }
+    .book-cover img { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .book-info { min-width: 0; flex: 1; }
+    .book-info h3 {
+      display: -webkit-box;
+      overflow: hidden;
+      margin: 2px 0 5px;
+      font-size: 15px;
+      line-height: 1.25;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+    .book-author { overflow: hidden; margin-bottom: 10px; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .book-series { overflow: hidden; margin: -5px 0 7px; color: #8d6743; font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+    .book-isbn { margin-bottom: 8px; color: #8c7967; font-size: 9px; letter-spacing: .2px; }
+    .book-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+    .status-select {
+      width: auto;
+      max-width: 112px;
+      height: 26px;
+      padding: 0 20px 0 7px;
+      border: 0;
+      border-radius: 6px;
+      background-color: #efe3cf;
+      font-size: 9px;
+    }
+    .book-time { color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .book-progress-action {
+      margin-top: 9px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: #855341;
+      font-size: 9px;
+      font-weight: 700;
+      text-align: left;
+    }
+    .book-progress-action:hover { color: var(--green-dark); text-decoration: underline; }
+    .delete-book {
+      position: absolute;
+      top: 8px;
+      right: 7px;
+      width: 26px;
+      height: 26px;
+      display: grid;
+      place-items: center;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: #9a9d95;
+      font-size: 16px;
+      opacity: 0;
+    }
+    .book-card:hover .delete-book, .delete-book:focus-visible { opacity: 1; }
+    .delete-book:hover { background: #f8e9e5; color: #a44230; }
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 44px 20px;
+      border: 1px dashed #d7c4aa;
+      border-radius: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .empty-icon { margin-bottom: 12px; color: #b88d55; font-size: 29px; }
+    .empty-state h3 { margin-bottom: 5px; color: var(--ink); font-size: 18px; }
+    .empty-state p { margin-bottom: 0; font-size: 12px; }
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      z-index: 5;
+      max-width: min(350px, calc(100vw - 32px));
+      padding: 12px 16px;
+      border-radius: 10px;
+      background: var(--green-dark);
+      box-shadow: var(--shadow);
+      color: white;
+      font-size: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); }
+    #welcome, #timer, #add-book, #library, #progress { scroll-margin-top: 24px; }
+
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 78px minmax(0, 1fr); }
+      .sidebar { align-items: center; padding: 24px 10px 16px; }
+      .sidebar-brand { display: none; }
+      .sidebar-brand-copy, .sidebar-section-label, .sidebar-note, .sidebar-link-label, .sidebar-count { display: none; }
+      .sidebar-nav { width: 100%; gap: 9px; }
+      .sidebar-link { width: 48px; justify-content: center; padding: 0; }
+      .sidebar-link:hover { transform: none; }
+      .install-app-button { width: 48px; min-height: 38px; margin: 14px auto 0; padding: 0; font-size: 0; }
+    }
+    @media (max-width: 860px) {
+      .book-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .welcome { align-items: flex-start; flex-direction: column; }
+      .welcome::after { display: none; }
+    }
+    @media (max-width: 700px) {
+      .app-shell { display: block; }
+      .sidebar { position: sticky; z-index: 4; width: 100%; height: auto; display: block; padding: 11px 5vw 0; }
+      .sidebar-brand { display: flex; justify-content: flex-start; margin: 0 0 10px; }
+      .sidebar-brand-copy { display: grid; }
+      .sidebar-section-label, .sidebar-note { display: none; }
+      .sidebar-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0 0 9px; }
+      .sidebar-link { width: auto; min-width: 0; min-height: 54px; flex-direction: column; justify-content: center; gap: 3px; padding: 5px 2px; font-size: 9px; white-space: normal; }
+      .sidebar-link svg { width: 17px; height: 17px; }
+      .sidebar-link-label { display: block; flex: none; line-height: 1.1; text-align: center; }
+      .install-app-button { width: 100%; min-height: 34px; margin: 0 0 8px; padding: 0 12px; font-size: 11px; }
+      .topbar { height: 62px; padding: 0 5vw; }
+      .topbar-context { font-size: 9px; letter-spacing: .8px; }
+      #welcome, #timer, #add-book, #library, #progress { scroll-margin-top: 125px; }
+    }
+    @media (max-width: 620px) {
+      .topbar { height: 66px; padding: 0 5vw; }
+      main { width: 90vw; padding-top: 30px; }
+      .today { display: none; }
+      .stats { width: 100%; }
+      .stat { min-width: 0; flex: 1; padding: 11px 10px; }
+      .stat strong { font-size: 18px; }
+      .timer-panel { min-height: 320px; }
+      .form-panel { padding: 22px 20px; }
+      .home-shortcuts { grid-template-columns: 1fr; }
+      .library-header { align-items: flex-start; flex-direction: column; }
+      .progress-section-header { align-items: flex-start; flex-direction: column; }
+      .library-tools { width: 100%; flex-wrap: wrap; }
+      .search-wrap { flex: 1 1 100%; }
+      .search-input { width: 100%; }
+      .filter-select { width: 125px; }
+      .wishlist-button { flex: 1; }
+      .catalog-result { grid-template-columns: 42px minmax(0, 1fr); align-items: start; gap: 9px; }
+      .catalog-result-cover { width: 42px; height: 60px; }
+      .catalog-result-actions { grid-column: 1 / -1; flex-direction: row; }
+      .catalog-result-actions .button { flex: 1; padding: 0 6px; white-space: normal; }
+      .book-grid { grid-template-columns: minmax(0, 1fr); }
+      .book-card { min-height: 145px; }
+      .delete-book { opacity: 1; }
+      .progress-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+      .progress-summary-card { min-height: 120px; padding: 14px; }
+      .progress-summary-card:last-child { grid-column: 1 / -1; }
+      .progress-chart-grid { grid-template-columns: 1fr; }
+      .progress-chart-card { padding: 18px 16px 15px; }
+      .settings-grid, .palette-options { grid-template-columns: 1fr; }
+      .settings-card-wide { grid-column: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Menú principal">
+      <a class="brand sidebar-brand" href="#home-view" aria-label="Entre Líneas, inicio">
+        <span class="sidebar-brand-copy">
+          <strong>Entre Líneas</strong>
+          <small>LECTURA A TU RITMO</small>
+        </span>
+      </a>
+      <p class="sidebar-section-label">TU ESPACIO</p>
+      <nav class="sidebar-nav" aria-label="Navegación">
+        <a class="sidebar-link" href="#home-view" aria-label="Inicio" aria-current="page">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m3.5 10 8.5-7 8.5 7"></path><path d="M5.5 9v11h13V9M9.5 20v-6h5v6"></path></svg>
+          <span class="sidebar-link-label">Inicio</span>
+        </a>
+        <a class="sidebar-link" href="#library-view" aria-label="Mi biblioteca">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v17H6.5A2.5 2.5 0 0 1 4 17.5z"></path><path d="M4 5.5v12M8 7h8M8 11h7"></path></svg>
+          <span class="sidebar-link-label">Biblioteca</span>
+          <span class="sidebar-count" id="sidebar-book-count">0</span>
+        </a>
+        <a class="sidebar-link" href="#progress-view" aria-label="Progreso de lectura">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"></path></svg>
+          <span class="sidebar-link-label">Progreso</span>
+        </a>
+        <a class="sidebar-link" href="#timer-view" aria-label="Temporizador">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2.5 1.5M9 2h6M12 2v3"></path></svg>
+          <span class="sidebar-link-label">Temporizador</span>
+        </a>
+        <a class="sidebar-link" href="#add-book-view" aria-label="Agregar un libro">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>
+          <span class="sidebar-link-label">Agregar libro</span>
+        </a>
+        <a class="sidebar-link" href="#settings-view" aria-label="Configuración">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.6 2.77-.08-.03a1.7 1.7 0 0 0-1.82.35l-.05.04h-3.2l-.02-.08a1.7 1.7 0 0 0-1.35-1.31l-.08-.02-1.6-2.77.06-.06A1.7 1.7 0 0 0 10.4 14l-.03-.08v-3.2l.08-.02a1.7 1.7 0 0 0 1.31-1.35l.02-.08 2.77-1.6.06.06a1.7 1.7 0 0 0 1.88.34l.06-.03 2.77 1.6-.03.08a1.7 1.7 0 0 0 .35 1.82l.04.05v3.2l-.08.02a1.7 1.7 0 0 0-1.31 1.35z"></path></svg>
+          <span class="sidebar-link-label">Configuración</span>
+        </a>
+      </nav>
+      <button class="install-app-button" id="install-app" type="button" aria-label="Instalar Entre Líneas" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"></path></svg>
+        <span>Instalar app</span>
+      </button>
+      <div class="sidebar-note">
+        <span class="sidebar-note-icon" aria-hidden="true">✳</span>
+        <strong>Un capítulo a la vez</strong>
+        <p>Un espacio tranquilo para seguir el hilo de tus historias.</p>
+      </div>
+    </aside>
+
+    <div class="page-shell">
+      <header class="topbar">
+        <span class="topbar-context">Tu librería personal</span>
+        <div class="topbar-right">
+          <span class="today" id="today"></span>
+        </div>
+      </header>
+
+      <main>
+    <section class="page-view home-view" id="home-view" aria-labelledby="welcome-title">
+    <section class="welcome" id="welcome">
+      <div>
+        <p class="eyebrow">Tu rincón de lectura</p>
+        <h1 id="welcome-title">Un libro a la vez.</h1>
+        <p class="subtitle">Haz espacio para una buena historia, a tu propio ritmo.</p>
+      </div>
+      <div class="stats" aria-label="Resumen de tu biblioteca">
+        <div class="stat"><strong id="stat-total">0</strong><span>libros en total</span></div>
+        <div class="stat"><strong id="stat-reading">0</strong><span>leyendo ahora</span></div>
+        <div class="stat"><strong id="stat-hours">0h</strong><span>tiempo de lectura</span></div>
+      </div>
+    </section>
+
+    <div class="home-shortcuts" aria-label="Accesos rápidos">
+      <a class="home-shortcut" href="#library-view">
+        <span class="shortcut-icon" aria-hidden="true">▤</span>
+        <span class="shortcut-copy"><strong>Mi biblioteca</strong><small>Explora y organiza tus libros</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">↗</span>
+      </a>
+      <a class="home-shortcut" href="#timer-view">
+        <span class="shortcut-icon" aria-hidden="true">◷</span>
+        <span class="shortcut-copy"><strong>Iniciar lectura</strong><small>Dedica un momento a tu historia</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">↗</span>
+      </a>
+      <a class="home-shortcut" href="#add-book-view">
+        <span class="shortcut-icon" aria-hidden="true">＋</span>
+        <span class="shortcut-copy"><strong>Agregar un libro</strong><small>Registra un nuevo ISBN</small></span>
+        <span class="shortcut-arrow" aria-hidden="true">↗</span>
+      </a>
+    </div>
+    </section>
+
+    <section class="page-view" id="library-view" aria-labelledby="library-title" hidden>
+    <section id="library" aria-labelledby="library-title">
+      <div class="library-header">
+        <div>
+          <p class="eyebrow">Colección personal</p>
+          <h2 id="library-title" class="section-title">Mi biblioteca</h2>
+        </div>
+        <div class="library-tools">
+          <div class="search-wrap">
+            <span aria-hidden="true">⌕</span>
+            <input class="search-input" id="search" type="search" placeholder="Buscar título o autor…" aria-label="Buscar libros">
+          </div>
+          <button class="button wishlist-button" id="wishlist-filter" type="button" aria-pressed="false">
+            <span aria-hidden="true">♡</span> Deseados <span class="wishlist-count" id="wishlist-count">0</span>
+          </button>
+          <select class="status-select filter-select" id="filter" aria-label="Filtrar por estado">
+            <option value="">Todos los estados</option>
+            <option value="Deseado">Lista de deseados</option>
+            <option value="Pendiente">Pendientes</option>
+            <option value="Leyendo">Leyendo</option>
+            <option value="Terminado">Terminados</option>
+          </select>
+        </div>
+      </div>
+      <div class="book-grid" id="book-grid" aria-live="polite"></div>
+    </section>
+    </section>
+
+    <section class="page-view" id="progress-view" aria-labelledby="progress-title" hidden>
+    <section class="progress-section" id="progress" aria-labelledby="progress-title">
+      <div class="progress-section-header">
+        <div>
+          <p class="eyebrow">Tu recorrido lector</p>
+          <h2 id="progress-title">Progreso</h2>
+          <p class="progress-section-intro">Un vistazo a todo lo que has leído, libro por libro.</p>
+        </div>
+      </div>
+      <div class="progress-summary" aria-label="Resumen de tu avance">
+        <article class="progress-summary-card">
+          <span class="progress-summary-label">Tiempo de lectura</span>
+          <strong class="progress-summary-value" id="progress-total-hours">0 min</strong>
+          <span class="progress-summary-detail">Incluye la sesión actual</span>
+        </article>
+        <article class="progress-summary-card">
+          <span class="progress-summary-label">Páginas leídas</span>
+          <strong class="progress-summary-value" id="progress-total-pages">0</strong>
+          <span class="progress-summary-detail">Suma de tus libros registrados</span>
+        </article>
+        <article class="progress-summary-card">
+          <span class="progress-summary-label">Libros con avance</span>
+          <strong class="progress-summary-value" id="progress-active-books">0</strong>
+          <span class="progress-summary-detail">Con tiempo o páginas anotadas</span>
+        </article>
+      </div>
+      <div class="progress-chart-grid">
+        <article class="panel progress-chart-card">
+          <div class="progress-chart-heading">
+            <div>
+              <h3>Horas por libro</h3>
+              <p>Tiempo acumulado en tus sesiones de lectura.</p>
+            </div>
+            <span class="progress-chart-unit">TIEMPO</span>
+          </div>
+          <ol class="chart-list" id="hours-chart" aria-label="Gráfica de horas leídas por libro"></ol>
+        </article>
+        <article class="panel progress-chart-card">
+          <div class="progress-chart-heading">
+            <div>
+              <h3>Páginas por libro</h3>
+              <p>Actualiza las páginas desde cada libro en tu biblioteca.</p>
+            </div>
+            <span class="progress-chart-unit">PÁGINAS</span>
+          </div>
+          <ol class="chart-list" id="pages-chart" aria-label="Gráfica de páginas leídas por libro"></ol>
+        </article>
+      </div>
+    </section>
+    </section>
+
+    <section class="page-view" id="timer-view" aria-labelledby="timer-view-title" hidden>
+      <div class="page-view-heading">
+        <p class="eyebrow">Tu sesión de lectura</p>
+        <h1 id="timer-view-title">Temporizador</h1>
+        <p>Elige un libro y reserva un rato para leer.</p>
+      </div>
+      <article class="panel timer-panel" id="timer">
+        <div class="panel-heading">
+          <p class="eyebrow">Tu momento de lectura</p>
+          <p class="timer-label" id="timer-status">Listo cuando tú lo estés</p>
+        </div>
+        <label for="timer-book" class="timer-label">Elige un libro para tu sesión</label>
+        <select class="timer-select" id="timer-book" aria-label="Libro para el temporizador">
+          <option value="">Agrega un libro para comenzar</option>
+        </select>
+        <div class="timer-page-control">
+          <label for="timer-start-page">Comenzar en la página</label>
+          <input id="timer-start-page" type="number" min="1" step="1" value="1" aria-label="Página de inicio de la lectura" disabled>
+        </div>
+        <div class="timer-content">
+          <div>
+            <p class="timer-display" id="timer-display" role="timer" aria-live="off">00:00:00</p>
+            <p class="timer-book-title" id="timer-book-title">Tu próxima historia te espera</p>
+          </div>
+          <div class="timer-icon" aria-hidden="true">◷</div>
+        </div>
+        <div class="timer-actions">
+          <button class="button button-primary" id="timer-toggle" type="button" disabled>Iniciar lectura</button>
+          <button class="button button-light" id="timer-save" type="button" hidden>Guardar sesión</button>
+          <button class="button button-light" id="timer-reset" type="button" hidden>Descartar</button>
+        </div>
+        <p class="timer-hint">Tu sesión se conserva aunque cierres esta página.</p>
+      </article>
+    </section>
+
+    <section class="page-view" id="add-book-view" aria-labelledby="add-book-title" hidden>
+      <article class="panel form-panel" id="add-book">
+        <p class="eyebrow">Un nuevo capítulo</p>
+        <h2 id="add-book-title">Agregar un libro</h2>
+        <p class="form-intro">Busca por título o autor, o completa los datos manualmente. El ISBN es opcional.</p>
+        <form class="catalog-search" id="book-search-form" novalidate>
+          <label for="book-search-query">Buscar en catálogos</label>
+          <div class="isbn-entry">
+            <input id="book-search-query" type="search" autocomplete="off" placeholder="Título o autor del libro">
+            <button class="button button-primary" type="submit">Buscar</button>
+          </div>
+          <p class="catalog-search-status" id="book-search-status" role="status" aria-live="polite"></p>
+          <p class="catalog-search-note">Consulta Google Books y Open Library. Para ver disponibilidad y precios, abre las opciones de Amazon.</p>
+          <a class="amazon-search-link" id="amazon-search-link" target="_blank" rel="noopener noreferrer" hidden>Ver opciones en Amazon ↗</a>
+          <div class="catalog-search-results" id="book-search-results" aria-live="polite"></div>
+        </form>
+        <div class="manual-entry-divider"><span>O agrégalo manualmente</span></div>
+        <form id="book-form" novalidate>
+          <div class="form-grid">
+            <div class="field field-full">
+              <label for="isbn">ISBN (opcional)</label>
+              <div class="isbn-entry">
+                <input id="isbn" name="isbn" autocomplete="off" placeholder="978-0-00-000000-0">
+                <button class="button button-quiet scan-button" id="scan-open" type="button">▦ &nbsp;Escanear</button>
+              </div>
+            </div>
+            <div class="field field-full">
+              <label for="title">Título</label>
+              <input id="title" name="title" maxlength="120" placeholder="El nombre del libro" required>
+            </div>
+            <div class="field">
+              <label for="author">Autor</label>
+              <input id="author" name="author" maxlength="80" placeholder="Nombre del autor" required>
+            </div>
+            <div class="field">
+              <label for="status">Estado</label>
+              <select class="status-select" id="status" name="status">
+                <option value="Pendiente">Pendiente</option>
+                <option value="Deseado">Deseado</option>
+                <option value="Leyendo">Leyendo</option>
+                <option value="Terminado">Terminado</option>
+              </select>
+            </div>
+          </div>
+          <p class="form-error" id="form-error" role="alert"></p>
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+          <div class="form-footer">
+            <p class="form-note">Contrastamos Open Library, Wikidata y Google Books; tus libros se guardan aquí.</p>
+            <button class="button button-primary" type="submit">＋ &nbsp;Agregar libro</button>
+          </div>
+        </form>
+      </article>
+    </section>
+
+    <section class="page-view" id="settings-view" aria-labelledby="settings-title" hidden>
+      <div class="page-view-heading">
+        <p class="eyebrow">A tu manera</p>
+        <h1 id="settings-title">Configuración</h1>
+        <p>Personaliza el aspecto y conserva una copia de tu biblioteca.</p>
+      </div>
+      <div class="settings-grid">
+        <article class="panel settings-card settings-card-wide">
+          <p class="eyebrow">Apariencia</p>
+          <h2>Paleta de colores</h2>
+          <p>Elige el ambiente que acompañará tus lecturas. La selección se guarda en este dispositivo.</p>
+          <div class="palette-options" id="palette-options" role="radiogroup" aria-label="Paleta de colores">
+            <label class="palette-option" for="palette-libreria">
+              <input id="palette-libreria" type="radio" name="palette" value="libreria">
+              <span class="palette-swatch palette-swatch-library" aria-hidden="true"></span>
+              <span class="palette-option-copy"><strong>Librería</strong><small>Parche y madera cálida</small></span>
+            </label>
+            <label class="palette-option" for="palette-bosque">
+              <input id="palette-bosque" type="radio" name="palette" value="bosque">
+              <span class="palette-swatch palette-swatch-forest" aria-hidden="true"></span>
+              <span class="palette-option-copy"><strong>Bosque</strong><small>Verde y salvia</small></span>
+            </label>
+            <label class="palette-option" for="palette-oceano">
+              <input id="palette-oceano" type="radio" name="palette" value="oceano">
+              <span class="palette-swatch palette-swatch-ocean" aria-hidden="true"></span>
+              <span class="palette-option-copy"><strong>Océano</strong><small>Azul y bruma</small></span>
+            </label>
+          </div>
+        </article>
+        <article class="panel settings-card">
+          <p class="eyebrow">Copia de seguridad</p>
+          <h2>Guardar tus datos</h2>
+          <p>Descarga un archivo con tus libros, avances, temporizador y paleta actual.</p>
+          <div class="settings-actions">
+            <button class="button button-primary" id="export-backup" type="button">Descargar respaldo</button>
+          </div>
+        </article>
+        <article class="panel settings-card">
+          <p class="eyebrow">Restaurar</p>
+          <h2>Cargar una biblioteca</h2>
+          <p>Selecciona un respaldo JSON creado desde Entre Líneas.</p>
+          <div class="settings-actions">
+            <button class="button button-quiet" id="import-backup" type="button">Elegir archivo</button>
+            <input id="backup-file" type="file" accept=".json,application/json" hidden>
+          </div>
+          <p class="settings-hint">La importación reemplaza la biblioteca actual después de confirmarlo.</p>
+        </article>
+      </div>
+      <p class="settings-status" id="settings-status" role="status" aria-live="polite"></p>
+    </section>
+      </main>
+    </div>
+  </div>
+  <dialog class="scanner-dialog" id="scanner-dialog" aria-labelledby="scanner-title">
+    <div class="scanner-header">
+      <div>
+        <h2 id="scanner-title">Escanear ISBN</h2>
+        <p>Apunta la cámara al código de barras del libro.</p>
+      </div>
+      <button class="scanner-close" id="scan-close" type="button" aria-label="Cerrar escáner">×</button>
+    </div>
+    <div class="scanner-video-wrap">
+      <video class="scanner-video" id="scanner-video" autoplay muted playsinline></video>
+      <div class="scanner-reticle" aria-hidden="true"></div>
+    </div>
+    <p class="scanner-message" id="scanner-message" role="status" aria-live="polite">Solicitando acceso a la cámara…</p>
+    <div class="scanner-footer">
+      <button class="button button-quiet" id="scan-cancel" type="button">Cerrar</button>
+    </div>
+  </dialog>
+  <dialog class="progress-dialog" id="progress-dialog" aria-labelledby="progress-dialog-title">
+    <div class="scanner-header">
+      <div>
+        <h2 id="progress-dialog-title">Actualizar páginas</h2>
+        <p id="progress-book-title"></p>
+      </div>
+      <button class="scanner-close" id="progress-close" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <form id="progress-form" novalidate>
+      <div class="progress-dialog-fields">
+        <div class="field">
+          <label for="pages-read">Páginas leídas</label>
+          <input id="pages-read" name="pagesRead" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+          <label for="page-count">Total de páginas</label>
+          <input id="page-count" name="pageCount" type="number" min="1" step="1" placeholder="Opcional">
+        </div>
+      </div>
+      <p class="progress-dialog-hint">Anota el avance acumulado del libro. El total es opcional, pero ayuda a mostrar cuánto llevas.</p>
+      <p class="progress-dialog-error" id="progress-form-error" role="alert"></p>
+      <div class="progress-dialog-footer">
+        <button class="button button-quiet" id="progress-cancel" type="button">Cancelar</button>
+        <button class="button button-primary" type="submit">Guardar avance</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog class="progress-dialog" id="session-dialog" aria-labelledby="session-dialog-title">
+    <div class="scanner-header">
+      <div>
+        <h2 id="session-dialog-title">Guardar sesión</h2>
+        <p id="session-book-title"></p>
+      </div>
+      <button class="scanner-close" id="session-close" type="button" aria-label="Cerrar">×</button>
+    </div>
+    <form id="session-form" novalidate>
+      <div class="progress-dialog-fields">
+        <div class="field field-full">
+          <label for="session-end-page">Última página leída (opcional)</label>
+          <input id="session-end-page" name="endPage" type="number" min="1" step="1" placeholder="Página final">
+        </div>
+      </div>
+      <p class="progress-dialog-hint" id="session-start-page"></p>
+      <p class="progress-dialog-hint">Se suman las páginas desde la de inicio hasta la final, ambas incluidas. Si la dejas vacía, se guardará solo el tiempo.</p>
+      <p class="progress-dialog-error" id="session-form-error" role="alert"></p>
+      <div class="progress-dialog-footer">
+        <button class="button button-quiet" id="session-cancel" type="button">Cancelar</button>
+        <button class="button button-primary" type="submit">Guardar sesión</button>
+      </div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
