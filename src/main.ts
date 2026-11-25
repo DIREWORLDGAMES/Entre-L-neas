@@ -30,14 +30,26 @@ interface TimerState {
 }
 
 type Palette = "libreria" | "bosque" | "oceano";
+type FontStyle = "modern" | "classic";
+type Density = "comfortable" | "compact";
+type MotionPreference = "system" | "reduced";
+
+interface Customization {
+  fontStyle: FontStyle;
+  density: Density;
+  motion: MotionPreference;
+}
 
 interface AppBackup {
   format: "entre-lineas-backup";
-  version: 1;
+  version: 1 | 2;
   exportedAt: string;
   palette: Palette;
   books: Book[];
   timer: TimerState | null;
+  fontStyle?: FontStyle;
+  density?: Density;
+  motion?: MotionPreference;
 }
 
 interface BookMetadata {
@@ -176,6 +188,12 @@ function isBookStatus(value: string): value is BookStatus {
       const STORAGE_KEY = "entre-lineas-library-v1";
       const TIMER_KEY = "entre-lineas-timer-v1";
       const PALETTE_KEY = "entre-lineas-palette-v1";
+      const CUSTOMIZATION_KEY = "entre-lineas-customization-v1";
+      const DEFAULT_CUSTOMIZATION: Customization = {
+        fontStyle: "modern",
+        density: "comfortable",
+        motion: "system"
+      };
       const coverColors = ["#667763", "#a76c51", "#6f7791", "#b08e56", "#597e79", "#8d6474"];
       const elements = {
         form: getElement<HTMLFormElement>("book-form"),
@@ -218,6 +236,9 @@ function isBookStatus(value: string): value is BookStatus {
         wishlistFilter: getElement<HTMLButtonElement>("wishlist-filter"),
         wishlistCount: getElement<HTMLElement>("wishlist-count"),
         paletteOptions: getElement<HTMLDivElement>("palette-options"),
+        fontStyle: getElement<HTMLSelectElement>("font-style"),
+        density: getElement<HTMLSelectElement>("library-density"),
+        motion: getElement<HTMLSelectElement>("motion-preference"),
         themeColor: getElement<HTMLMetaElement>("theme-color"),
         exportBackup: getElement<HTMLButtonElement>("export-backup"),
         importBackup: getElement<HTMLButtonElement>("import-backup"),
@@ -242,7 +263,9 @@ function isBookStatus(value: string): value is BookStatus {
       let books = loadBooks();
       let timer = loadTimer();
       let palette = loadPalette();
+      let customization = loadCustomization();
       applyPalette(palette);
+      applyCustomization(customization);
       let toastTimeout: number | null = null;
       let scannerStream: MediaStream | null = null;
       let scannerFrame: number | null = null;
@@ -288,6 +311,18 @@ function isBookStatus(value: string): value is BookStatus {
         return value === "libreria" || value === "bosque" || value === "oceano";
       }
 
+      function isFontStyle(value: unknown): value is FontStyle {
+        return value === "modern" || value === "classic";
+      }
+
+      function isDensity(value: unknown): value is Density {
+        return value === "comfortable" || value === "compact";
+      }
+
+      function isMotionPreference(value: unknown): value is MotionPreference {
+        return value === "system" || value === "reduced";
+      }
+
       function isTimerState(value: unknown, candidateBooks: Book[]): value is TimerState {
         if (typeof value !== "object" || value === null) return false;
         const state = value as Partial<TimerState>;
@@ -304,12 +339,14 @@ function isBookStatus(value: string): value is BookStatus {
         const backup = value as Record<string, unknown>;
         const backupBooks = backup.books;
         return backup.format === "entre-lineas-backup" &&
-          backup.version === 1 &&
+          (backup.version === 1 || backup.version === 2) &&
           typeof backup.exportedAt === "string" &&
           !Number.isNaN(Date.parse(backup.exportedAt)) &&
           isPalette(backup.palette) &&
           isBookArray(backupBooks) &&
-          (backup.timer === null || isTimerState(backup.timer, backupBooks));
+          (backup.timer === null || isTimerState(backup.timer, backupBooks)) &&
+          (backup.version === 1 ||
+            (isFontStyle(backup.fontStyle) && isDensity(backup.density) && isMotionPreference(backup.motion)));
       }
 
       function loadPalette(): Palette {
@@ -322,12 +359,52 @@ function isBookStatus(value: string): value is BookStatus {
         }
       }
 
+      function loadCustomization(): Customization {
+        try {
+          const saved: unknown = JSON.parse(localStorage.getItem(CUSTOMIZATION_KEY) || "null");
+          if (typeof saved !== "object" || saved === null) return { ...DEFAULT_CUSTOMIZATION };
+          const values = saved as Partial<Customization>;
+          return {
+            fontStyle: isFontStyle(values.fontStyle) ? values.fontStyle : DEFAULT_CUSTOMIZATION.fontStyle,
+            density: isDensity(values.density) ? values.density : DEFAULT_CUSTOMIZATION.density,
+            motion: isMotionPreference(values.motion) ? values.motion : DEFAULT_CUSTOMIZATION.motion
+          };
+        } catch (error) {
+          console.error("No se pudieron recuperar las preferencias de apariencia.", error);
+          return { ...DEFAULT_CUSTOMIZATION };
+        }
+      }
+
       function applyPalette(value: Palette): void {
         document.documentElement.dataset.palette = value;
         elements.themeColor.content = value === "bosque" ? "#263f31" : value === "oceano" ? "#213f55" : "#39251e";
         for (const input of elements.paletteOptions.querySelectorAll<HTMLInputElement>('input[name="palette"]')) {
           input.checked = input.value === value;
         }
+      }
+
+      function applyCustomization(value: Customization): void {
+        const root = document.documentElement;
+        root.dataset.fontStyle = value.fontStyle;
+        root.dataset.density = value.density;
+        root.dataset.motion = value.motion;
+        elements.fontStyle.value = value.fontStyle;
+        elements.density.value = value.density;
+        elements.motion.value = value.motion;
+      }
+
+      function saveCustomization(value: Customization): void {
+        try {
+          localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(value));
+        } catch (error) {
+          console.error("No se pudieron guardar las preferencias de apariencia.", error);
+          applyCustomization(customization);
+          setSettingsStatus("No se pudieron guardar las preferencias. Revisa el almacenamiento del navegador.", "error");
+          return;
+        }
+        customization = value;
+        applyCustomization(customization);
+        setSettingsStatus("Preferencias de apariencia actualizadas.");
       }
 
       function setSettingsStatus(message: string, state = ""): void {
@@ -389,7 +466,7 @@ function isBookStatus(value: string): value is BookStatus {
       }
 
       function persistBackup(backup: AppBackup): boolean {
-        const keys = [STORAGE_KEY, TIMER_KEY, PALETTE_KEY];
+        const keys = [STORAGE_KEY, TIMER_KEY, PALETTE_KEY, CUSTOMIZATION_KEY];
         const previousValues = new Map<string, string | null>();
         try {
           for (const key of keys) previousValues.set(key, localStorage.getItem(key));
@@ -397,6 +474,12 @@ function isBookStatus(value: string): value is BookStatus {
           if (backup.timer) localStorage.setItem(TIMER_KEY, JSON.stringify(backup.timer));
           else localStorage.removeItem(TIMER_KEY);
           localStorage.setItem(PALETTE_KEY, backup.palette);
+          const importedCustomization: Customization = {
+            fontStyle: backup.fontStyle ?? DEFAULT_CUSTOMIZATION.fontStyle,
+            density: backup.density ?? DEFAULT_CUSTOMIZATION.density,
+            motion: backup.motion ?? DEFAULT_CUSTOMIZATION.motion
+          };
+          localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(importedCustomization));
           return true;
         } catch (error) {
           console.error("No se pudo cargar el respaldo en el almacenamiento local.", error);
@@ -426,11 +509,12 @@ function isBookStatus(value: string): value is BookStatus {
         try {
           const backup: AppBackup = {
             format: "entre-lineas-backup",
-            version: 1,
+            version: 2,
             exportedAt: new Date().toISOString(),
             palette,
             books,
-            timer
+            timer,
+            ...customization
           };
           const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
           const url = URL.createObjectURL(blob);
@@ -461,7 +545,7 @@ function isBookStatus(value: string): value is BookStatus {
           setSettingsStatus("El archivo no es un respaldo válido de Entre Líneas.", "error");
           return;
         }
-        if (!window.confirm("Esto reemplazará la biblioteca, la sesión del temporizador y la paleta actuales. ¿Quieres continuar?")) {
+        if (!window.confirm("Esto reemplazará la biblioteca, la sesión del temporizador y las preferencias actuales. ¿Quieres continuar?")) {
           setSettingsStatus("Importación cancelada; no se modificaron los datos.");
           return;
         }
@@ -470,6 +554,12 @@ function isBookStatus(value: string): value is BookStatus {
         timer = parsed.timer;
         palette = parsed.palette;
         applyPalette(palette);
+        customization = {
+          fontStyle: parsed.fontStyle ?? DEFAULT_CUSTOMIZATION.fontStyle,
+          density: parsed.density ?? DEFAULT_CUSTOMIZATION.density,
+          motion: parsed.motion ?? DEFAULT_CUSTOMIZATION.motion
+        };
+        applyCustomization(customization);
         render();
         setSettingsStatus("Biblioteca y configuración restauradas correctamente.");
       }
@@ -1866,6 +1956,21 @@ function isBookStatus(value: string): value is BookStatus {
         palette = event.target.value;
         applyPalette(palette);
         setSettingsStatus("Paleta actualizada.");
+      });
+      elements.fontStyle.addEventListener("change", () => {
+        if (isFontStyle(elements.fontStyle.value)) {
+          saveCustomization({ ...customization, fontStyle: elements.fontStyle.value });
+        }
+      });
+      elements.density.addEventListener("change", () => {
+        if (isDensity(elements.density.value)) {
+          saveCustomization({ ...customization, density: elements.density.value });
+        }
+      });
+      elements.motion.addEventListener("change", () => {
+        if (isMotionPreference(elements.motion.value)) {
+          saveCustomization({ ...customization, motion: elements.motion.value });
+        }
       });
       elements.exportBackup.addEventListener("click", downloadBackup);
       elements.importBackup.addEventListener("click", () => elements.backupFile.click());

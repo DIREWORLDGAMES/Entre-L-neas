@@ -76,6 +76,18 @@
       --hero-glow: rgb(167 204 216 / 18%);
     }
 
+    :root[data-font-style="classic"] { font-family: Georgia, "Times New Roman", serif; }
+    :root[data-density="compact"] .book-grid { gap: 8px; }
+    :root[data-density="compact"] .book-card { min-height: 145px; gap: 9px; padding: 10px; }
+    :root[data-density="compact"] .book-cover { width: 46px; min-width: 46px; height: 70px; }
+    :root[data-motion="reduced"] *,
+    :root[data-motion="reduced"] *::before,
+    :root[data-motion="reduced"] *::after {
+      scroll-behavior: auto !important;
+      transition-duration: .01ms !important;
+      animation-duration: .01ms !important;
+    }
+
     * { box-sizing: border-box; }
 
     body {
@@ -459,6 +471,20 @@
     .settings-card-wide { grid-column: 1 / -1; }
     .settings-card h2 { margin-bottom: 7px; font-size: 19px; }
     .settings-card > p { margin-bottom: 17px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .preference-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .preference-control { display: grid; align-content: start; gap: 7px; min-width: 0; }
+    .preference-control label { color: var(--ink); font-size: 11px; font-weight: 700; }
+    .preference-control select {
+      width: 100%;
+      min-height: 40px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: var(--white);
+      color: var(--ink);
+      font: inherit;
+      font-size: 12px;
+    }
     .palette-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .palette-option {
       min-width: 0;
@@ -873,7 +899,7 @@
       .progress-summary-card:last-child { grid-column: 1 / -1; }
       .progress-chart-grid { grid-template-columns: 1fr; }
       .progress-chart-card { padding: 18px 16px 15px; }
-      .settings-grid, .palette-options { grid-template-columns: 1fr; }
+      .settings-grid, .palette-options, .preference-grid { grid-template-columns: 1fr; }
       .settings-card-wide { grid-column: auto; }
     }
     @media (prefers-reduced-motion: reduce) {
@@ -1168,10 +1194,38 @@
             </label>
           </div>
         </article>
+        <article class="panel settings-card settings-card-wide">
+          <p class="eyebrow">Personalización</p>
+          <h2>Lectura y pantalla</h2>
+          <p>Adapta la tipografía, el espacio de la biblioteca y el movimiento a tu preferencia. Estos ajustes se guardan en este dispositivo.</p>
+          <div class="preference-grid">
+            <div class="preference-control">
+              <label for="font-style">Tipografía</label>
+              <select id="font-style">
+                <option value="modern">Moderna · sans serif</option>
+                <option value="classic">Clásica · serif</option>
+              </select>
+            </div>
+            <div class="preference-control">
+              <label for="library-density">Espacio de la biblioteca</label>
+              <select id="library-density">
+                <option value="comfortable">Cómodo</option>
+                <option value="compact">Compacto</option>
+              </select>
+            </div>
+            <div class="preference-control">
+              <label for="motion-preference">Movimiento</label>
+              <select id="motion-preference">
+                <option value="system">Según mi dispositivo</option>
+                <option value="reduced">Reducido</option>
+              </select>
+            </div>
+          </div>
+        </article>
         <article class="panel settings-card">
           <p class="eyebrow">Copia de seguridad</p>
           <h2>Guardar tus datos</h2>
-          <p>Descarga un archivo con tus libros, avances, temporizador y paleta actual.</p>
+          <p>Descarga un archivo con tus libros, avances, temporizador y preferencias de apariencia.</p>
           <div class="settings-actions">
             <button class="button button-primary" id="export-backup" type="button">Descargar respaldo</button>
           </div>
