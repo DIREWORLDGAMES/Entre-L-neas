@@ -1,14 +1,16 @@
-const CACHE_NAME = "entre-lineas-shell-v7";
+const CACHE_NAME = "entre-lineas-shell-v8";
+const APP_BASE = new URL("./", self.location.href);
+const appUrl = path => new URL(path, APP_BASE).href;
 const APP_SHELL = [
-  "/",
-  "/index.html",
-  "/manifest.webmanifest",
-  "/icons/icon-32.png",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
-  "/icons/icon-180.png",
-  "/icons/icon-maskable-512.png",
-  "/vendor/zxing-browser.min.js"
+  appUrl("./"),
+  appUrl("index.html"),
+  appUrl("manifest.webmanifest"),
+  appUrl("icons/icon-32.png"),
+  appUrl("icons/icon-192.png"),
+  appUrl("icons/icon-512.png"),
+  appUrl("icons/icon-180.png"),
+  appUrl("icons/icon-maskable-512.png"),
+  appUrl("vendor/zxing-browser.min.js")
 ];
 
 function cacheResponse(event, request, response) {
@@ -23,12 +25,12 @@ self.addEventListener("install", event => {
       .then(cache => cache.addAll(APP_SHELL))
       .then(async () => {
         const cache = await caches.open(CACHE_NAME);
-        const cachedIndex = await cache.match("/");
+        const cachedIndex = await cache.match(appUrl("./"));
         if (!cachedIndex) throw new Error("No se encontró el documento principal para preparar la app.");
         const html = await cachedIndex.text();
         const assets = [...html.matchAll(/(?:src|href)="([^"]+)"/g)]
-          .map(([, path]) => new URL(path, self.location.origin))
-          .filter(url => url.origin === self.location.origin && /\.(?:js|css)$/.test(url.pathname))
+          .map(([, path]) => new URL(path, APP_BASE))
+          .filter(url => url.origin === self.location.origin && url.pathname.startsWith(APP_BASE.pathname) && /\.(?:js|css)$/.test(url.pathname))
           .map(url => url.href);
         await cache.addAll([...new Set(assets)]);
       })
@@ -64,7 +66,7 @@ self.addEventListener("fetch", event => {
           cacheResponse(event, request, response);
           return response;
         })
-        .catch(async () => (await caches.match(request, { ignoreVary: true })) || (await caches.match("/index.html", { ignoreVary: true })) || Response.error())
+        .catch(async () => (await caches.match(request, { ignoreVary: true })) || (await caches.match(appUrl("index.html"), { ignoreVary: true })) || Response.error())
     );
     return;
   }

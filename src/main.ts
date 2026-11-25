@@ -1477,7 +1477,7 @@ function isBookStatus(value: string): value is BookStatus {
         }
 
         if (isProduction && "serviceWorker" in navigator) {
-          void navigator.serviceWorker.register("/sw.js").catch(error => {
+          void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(error => {
             console.error("No se pudo registrar el modo sin conexión.", error);
             showToast("No pudimos preparar el uso sin conexión.");
           });

@@ -28,6 +28,12 @@ La compilación genera `dist/`, que puedes publicar en un hosting estático con 
 La app conserva la biblioteca local y puede abrirse sin conexión después de la primera carga. Para buscar libros por ISBN y cargar portadas se necesita internet. La cámara y la instalación requieren HTTPS en el sitio publicado; `localhost` sirve para probarlo en el mismo equipo.
 El ícono del libro se usa en la app instalada, el acceso de iOS y la pestaña del navegador.
 
+## Publicar en GitHub Pages
+
+El workflow de GitHub Actions compila y publica automáticamente cada cambio enviado a `main`. En el repositorio, abre **Settings → Pages** y selecciona **GitHub Actions** como fuente de publicación. Cuando termine la ejecución en la pestaña **Actions**, GitHub mostrará la dirección del sitio.
+
+La ruta base se detecta automáticamente a partir del nombre del repositorio, por lo que también funciona en una URL de proyecto como `https://usuario.github.io/nombre-del-repositorio/`. La app se sirve con HTTPS y puede instalarse desde Chrome en Android.
+
 El catálogo consulta Open Library, Wikidata y Google Books cuando hace falta. Los datos de la biblioteca siguen guardándose en el navegador.
 
 Cada opción del menú abre una vista independiente: Inicio, Biblioteca, Progreso, Temporizador, Agregar libro y Configuración.
