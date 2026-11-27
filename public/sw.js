@@ -1,5 +1,7 @@
-const CACHE_NAME = "entre-lineas-shell-v11";
+const CACHE_NAME = "entre-lineas-shell-v14";
+const COVER_CACHE_NAME = "entre-lineas-covers-v1";
 const APP_BASE = new URL("./", self.location.href);
+const COVER_PATH = new URL("__cover", APP_BASE).pathname;
 const appUrl = path => new URL(path, APP_BASE).href;
 const APP_SHELL = [
   appUrl("./"),
@@ -12,6 +14,16 @@ const APP_SHELL = [
   appUrl("icons/icon-maskable-512.png"),
   appUrl("vendor/zxing-browser.min.js")
 ];
+
+function isAllowedCoverUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" &&
+      ["books.google.com", "books.googleusercontent.com", "covers.openlibrary.org"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
 
 function cacheResponse(event, request, response) {
   if (!response.ok) return;
@@ -63,6 +75,38 @@ self.addEventListener("fetch", event => {
   const request = event.request;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+
+  if (url.pathname === COVER_PATH) {
+    event.respondWith((async () => {
+      const sourceUrl = url.searchParams.get("url");
+      if (!sourceUrl || !isAllowedCoverUrl(sourceUrl)) return new Response("Unsupported cover source", { status: 400 });
+
+      let cache;
+      try {
+        cache = await caches.open(COVER_CACHE_NAME);
+        const cached = await cache.match(request);
+        if (cached) return cached;
+      } catch (error) {
+        console.error("No se pudo consultar la portada guardada.", error);
+      }
+
+      try {
+        const response = await fetch(sourceUrl, { mode: "no-cors" });
+        if (cache && (response.ok || response.type === "opaque")) {
+          try {
+            await cache.put(request, response.clone());
+          } catch (error) {
+            console.error("No se pudo guardar la portada para verla sin conexión.", error);
+          }
+        }
+        return response;
+      } catch (error) {
+        console.error("No se pudo cargar la portada y no hay una copia guardada.", error);
+        return Response.error();
+      }
+    })());
+    return;
+  }
 
   if (request.mode === "navigate") {
     event.respondWith(

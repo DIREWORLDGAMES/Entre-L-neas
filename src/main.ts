@@ -33,11 +33,18 @@ type Palette = "libreria" | "bosque" | "oceano";
 type FontStyle = "modern" | "classic";
 type Density = "comfortable" | "compact";
 type MotionPreference = "system" | "reduced";
+type ContrastPreference = "standard" | "high";
+type CornerStyle = "rounded" | "square";
+type ThemePreference = "light" | "dark";
 
 interface Customization {
   fontStyle: FontStyle;
   density: Density;
   motion: MotionPreference;
+  contrast: ContrastPreference;
+  cornerStyle: CornerStyle;
+  keepScreenOn: boolean;
+  theme: ThemePreference;
 }
 
 interface AppBackup {
@@ -50,6 +57,10 @@ interface AppBackup {
   fontStyle?: FontStyle;
   density?: Density;
   motion?: MotionPreference;
+  contrast?: ContrastPreference;
+  cornerStyle?: CornerStyle;
+  keepScreenOn?: boolean;
+  theme?: ThemePreference;
 }
 
 interface BookMetadata {
@@ -192,7 +203,11 @@ function isBookStatus(value: string): value is BookStatus {
       const DEFAULT_CUSTOMIZATION: Customization = {
         fontStyle: "modern",
         density: "comfortable",
-        motion: "system"
+        motion: "system",
+        contrast: "standard",
+        cornerStyle: "rounded",
+        keepScreenOn: false,
+        theme: "light"
       };
       const coverColors = ["#667763", "#a76c51", "#6f7791", "#b08e56", "#597e79", "#8d6474"];
       const elements = {
@@ -239,12 +254,22 @@ function isBookStatus(value: string): value is BookStatus {
         fontStyle: getElement<HTMLSelectElement>("font-style"),
         density: getElement<HTMLSelectElement>("library-density"),
         motion: getElement<HTMLSelectElement>("motion-preference"),
+        contrast: getElement<HTMLSelectElement>("contrast-preference"),
+        cornerStyle: getElement<HTMLSelectElement>("corner-style"),
+        theme: getElement<HTMLSelectElement>("theme-preference"),
+        keepScreenOn: getElement<HTMLInputElement>("keep-screen-on"),
+        wakeLockStatus: getElement<HTMLElement>("wake-lock-status"),
         themeColor: getElement<HTMLMetaElement>("theme-color"),
         exportBackup: getElement<HTMLButtonElement>("export-backup"),
         importBackup: getElement<HTMLButtonElement>("import-backup"),
         backupFile: getElement<HTMLInputElement>("backup-file"),
         updateApp: getElement<HTMLButtonElement>("update-app"),
         settingsStatus: getElement<HTMLElement>("settings-status"),
+        menuToggle: getElement<HTMLButtonElement>("menu-toggle"),
+        menuClose: getElement<HTMLButtonElement>("menu-close"),
+        menuBackdrop: getElement<HTMLButtonElement>("menu-backdrop"),
+        sidebar: getElement<HTMLElement>("main-menu"),
+        pageShell: getElement<HTMLElement>("page-shell"),
         timerBook: getElement<HTMLSelectElement>("timer-book"),
         timerDisplay: getElement<HTMLElement>("timer-display"),
         timerBookTitle: getElement<HTMLElement>("timer-book-title"),
@@ -265,6 +290,8 @@ function isBookStatus(value: string): value is BookStatus {
       let timer = loadTimer();
       let palette = loadPalette();
       let customization = loadCustomization();
+      let screenWakeLock: WakeLockSentinel | null = null;
+      let wakeLockGeneration = 0;
       applyPalette(palette);
       applyCustomization(customization);
       let toastTimeout: number | null = null;
@@ -324,6 +351,18 @@ function isBookStatus(value: string): value is BookStatus {
         return value === "system" || value === "reduced";
       }
 
+      function isContrastPreference(value: unknown): value is ContrastPreference {
+        return value === "standard" || value === "high";
+      }
+
+      function isCornerStyle(value: unknown): value is CornerStyle {
+        return value === "rounded" || value === "square";
+      }
+
+      function isThemePreference(value: unknown): value is ThemePreference {
+        return value === "light" || value === "dark";
+      }
+
       function isTimerState(value: unknown, candidateBooks: Book[]): value is TimerState {
         if (typeof value !== "object" || value === null) return false;
         const state = value as Partial<TimerState>;
@@ -347,7 +386,11 @@ function isBookStatus(value: string): value is BookStatus {
           isBookArray(backupBooks) &&
           (backup.timer === null || isTimerState(backup.timer, backupBooks)) &&
           (backup.version === 1 ||
-            (isFontStyle(backup.fontStyle) && isDensity(backup.density) && isMotionPreference(backup.motion)));
+            (isFontStyle(backup.fontStyle) && isDensity(backup.density) && isMotionPreference(backup.motion))) &&
+          (backup.contrast === undefined || isContrastPreference(backup.contrast)) &&
+          (backup.cornerStyle === undefined || isCornerStyle(backup.cornerStyle)) &&
+          (backup.keepScreenOn === undefined || typeof backup.keepScreenOn === "boolean") &&
+          (backup.theme === undefined || isThemePreference(backup.theme));
       }
 
       function loadPalette(): Palette {
@@ -368,7 +411,11 @@ function isBookStatus(value: string): value is BookStatus {
           return {
             fontStyle: isFontStyle(values.fontStyle) ? values.fontStyle : DEFAULT_CUSTOMIZATION.fontStyle,
             density: isDensity(values.density) ? values.density : DEFAULT_CUSTOMIZATION.density,
-            motion: isMotionPreference(values.motion) ? values.motion : DEFAULT_CUSTOMIZATION.motion
+            motion: isMotionPreference(values.motion) ? values.motion : DEFAULT_CUSTOMIZATION.motion,
+            contrast: isContrastPreference(values.contrast) ? values.contrast : DEFAULT_CUSTOMIZATION.contrast,
+            cornerStyle: isCornerStyle(values.cornerStyle) ? values.cornerStyle : DEFAULT_CUSTOMIZATION.cornerStyle,
+            keepScreenOn: typeof values.keepScreenOn === "boolean" ? values.keepScreenOn : DEFAULT_CUSTOMIZATION.keepScreenOn,
+            theme: isThemePreference(values.theme) ? values.theme : DEFAULT_CUSTOMIZATION.theme
           };
         } catch (error) {
           console.error("No se pudieron recuperar las preferencias de apariencia.", error);
@@ -376,9 +423,14 @@ function isBookStatus(value: string): value is BookStatus {
         }
       }
 
+      function updateBrowserThemeColor(): void {
+        const lightThemeColor = palette === "bosque" ? "#263f31" : palette === "oceano" ? "#213f55" : "#39251e";
+        elements.themeColor.content = customization.theme === "dark" ? "#171613" : lightThemeColor;
+      }
+
       function applyPalette(value: Palette): void {
         document.documentElement.dataset.palette = value;
-        elements.themeColor.content = value === "bosque" ? "#263f31" : value === "oceano" ? "#213f55" : "#39251e";
+        updateBrowserThemeColor();
         for (const input of elements.paletteOptions.querySelectorAll<HTMLInputElement>('input[name="palette"]')) {
           input.checked = input.value === value;
         }
@@ -389,9 +441,17 @@ function isBookStatus(value: string): value is BookStatus {
         root.dataset.fontStyle = value.fontStyle;
         root.dataset.density = value.density;
         root.dataset.motion = value.motion;
+        root.dataset.contrast = value.contrast;
+        root.dataset.cornerStyle = value.cornerStyle;
+        root.dataset.theme = value.theme;
+        elements.keepScreenOn.checked = value.keepScreenOn;
         elements.fontStyle.value = value.fontStyle;
         elements.density.value = value.density;
         elements.motion.value = value.motion;
+        elements.contrast.value = value.contrast;
+        elements.cornerStyle.value = value.cornerStyle;
+        elements.theme.value = value.theme;
+        updateBrowserThemeColor();
       }
 
       function saveCustomization(value: Customization): void {
@@ -406,6 +466,90 @@ function isBookStatus(value: string): value is BookStatus {
         customization = value;
         applyCustomization(customization);
         setSettingsStatus("Preferencias de apariencia actualizadas.");
+      }
+
+      async function syncScreenWakeLock(): Promise<void> {
+        const generation = ++wakeLockGeneration;
+        if (!customization.keepScreenOn) {
+          const currentLock = screenWakeLock;
+          screenWakeLock = null;
+          if (currentLock && !currentLock.released) {
+            try {
+              await currentLock.release();
+            } catch (error) {
+              console.error("No se pudo liberar el bloqueo de pantalla.", error);
+              elements.wakeLockStatus.textContent = "No se pudo liberar el bloqueo de pantalla.";
+              return;
+            }
+          }
+          elements.wakeLockStatus.textContent = "La pantalla se apagará según la configuración del dispositivo.";
+          return;
+        }
+
+        if (!window.isSecureContext || !("wakeLock" in navigator)) {
+          elements.wakeLockStatus.textContent = "Este navegador o contexto no admite mantener la pantalla encendida.";
+          return;
+        }
+
+        if (document.visibilityState !== "visible") {
+          const currentLock = screenWakeLock;
+          screenWakeLock = null;
+          if (currentLock && !currentLock.released) {
+            try {
+              await currentLock.release();
+            } catch (error) {
+              console.error("No se pudo liberar el bloqueo al salir de la app.", error);
+            }
+          }
+          elements.wakeLockStatus.textContent = "Se intentará mantenerla encendida al volver a la app.";
+          return;
+        }
+
+        if (screenWakeLock && !screenWakeLock.released) {
+          elements.wakeLockStatus.textContent = "La pantalla permanecerá encendida mientras Entre Líneas esté visible.";
+          return;
+        }
+
+        try {
+          const requestedLock = await navigator.wakeLock.request("screen");
+          if (generation !== wakeLockGeneration || !customization.keepScreenOn || document.visibilityState !== "visible") {
+            await requestedLock.release();
+            return;
+          }
+          screenWakeLock = requestedLock;
+          requestedLock.addEventListener("release", () => {
+            if (screenWakeLock === requestedLock) screenWakeLock = null;
+            if (customization.keepScreenOn) {
+              elements.wakeLockStatus.textContent = document.visibilityState === "visible"
+                ? "El sistema liberó el bloqueo de pantalla."
+                : "Se intentará mantenerla encendida al volver a la app.";
+            }
+          }, { once: true });
+          elements.wakeLockStatus.textContent = "La pantalla permanecerá encendida mientras Entre Líneas esté visible.";
+        } catch (error) {
+          console.warn("No se pudo mantener la pantalla encendida.", error);
+          elements.wakeLockStatus.textContent = "El navegador o el sistema no permitió mantener la pantalla encendida.";
+        }
+      }
+
+      function setupScreenWakeLock(): void {
+        const supported = window.isSecureContext && "wakeLock" in navigator;
+        elements.keepScreenOn.disabled = !supported;
+        if (!supported) {
+          elements.wakeLockStatus.textContent = "Esta opción requiere un navegador compatible y una conexión segura (HTTPS).";
+          return;
+        }
+
+        elements.keepScreenOn.addEventListener("change", () => {
+          const keepScreenOn = elements.keepScreenOn.checked;
+          saveCustomization({ ...customization, keepScreenOn });
+          if (customization.keepScreenOn !== keepScreenOn) return;
+          void syncScreenWakeLock();
+        });
+        document.addEventListener("visibilitychange", () => {
+          void syncScreenWakeLock();
+        });
+        void syncScreenWakeLock();
       }
 
       function setSettingsStatus(message: string, state = ""): void {
@@ -478,7 +622,11 @@ function isBookStatus(value: string): value is BookStatus {
           const importedCustomization: Customization = {
             fontStyle: backup.fontStyle ?? DEFAULT_CUSTOMIZATION.fontStyle,
             density: backup.density ?? DEFAULT_CUSTOMIZATION.density,
-            motion: backup.motion ?? DEFAULT_CUSTOMIZATION.motion
+            motion: backup.motion ?? DEFAULT_CUSTOMIZATION.motion,
+            contrast: backup.contrast ?? DEFAULT_CUSTOMIZATION.contrast,
+            cornerStyle: backup.cornerStyle ?? DEFAULT_CUSTOMIZATION.cornerStyle,
+            keepScreenOn: backup.keepScreenOn ?? DEFAULT_CUSTOMIZATION.keepScreenOn,
+            theme: backup.theme ?? DEFAULT_CUSTOMIZATION.theme
           };
           localStorage.setItem(CUSTOMIZATION_KEY, JSON.stringify(importedCustomization));
           return true;
@@ -558,9 +706,14 @@ function isBookStatus(value: string): value is BookStatus {
         customization = {
           fontStyle: parsed.fontStyle ?? DEFAULT_CUSTOMIZATION.fontStyle,
           density: parsed.density ?? DEFAULT_CUSTOMIZATION.density,
-          motion: parsed.motion ?? DEFAULT_CUSTOMIZATION.motion
+          motion: parsed.motion ?? DEFAULT_CUSTOMIZATION.motion,
+          contrast: parsed.contrast ?? DEFAULT_CUSTOMIZATION.contrast,
+          cornerStyle: parsed.cornerStyle ?? DEFAULT_CUSTOMIZATION.cornerStyle,
+          keepScreenOn: parsed.keepScreenOn ?? DEFAULT_CUSTOMIZATION.keepScreenOn,
+          theme: parsed.theme ?? DEFAULT_CUSTOMIZATION.theme
         };
         applyCustomization(customization);
+        void syncScreenWakeLock();
         render();
         setSettingsStatus("Biblioteca y configuración restauradas correctamente.");
       }
@@ -615,6 +768,21 @@ function isBookStatus(value: string): value is BookStatus {
         } catch {
           return null;
         }
+      }
+
+      function loadCoverImage(image: HTMLImageElement, coverUrl: string, onFailure: () => void): void {
+        const cachedUrl = new URL(`${import.meta.env.BASE_URL}__cover`, window.location.origin);
+        cachedUrl.searchParams.set("url", coverUrl);
+        let triedOriginalUrl = false;
+        image.addEventListener("error", () => {
+          if (!triedOriginalUrl) {
+            triedOriginalUrl = true;
+            image.src = coverUrl;
+            return;
+          }
+          onFailure();
+        });
+        image.src = cachedUrl.href;
       }
 
       async function fetchBookJson<T>(url: string | URL): Promise<T> {
@@ -1425,13 +1593,12 @@ function isBookStatus(value: string): value is BookStatus {
           const coverInitial = book.title.trim().charAt(0).toLocaleUpperCase("es");
           if (book.coverUrl) {
             const image = document.createElement("img");
-            image.src = book.coverUrl;
             image.alt = "";
             image.loading = "lazy";
-            image.addEventListener("error", () => {
+            loadCoverImage(image, book.coverUrl, () => {
               cover.replaceChildren();
               cover.textContent = coverInitial;
-            }, { once: true });
+            });
             cover.append(image);
           } else {
             cover.textContent = coverInitial;
@@ -1503,7 +1670,59 @@ function isBookStatus(value: string): value is BookStatus {
         }
       }
 
+      function setSidebarMenuOpen(isOpen: boolean, returnFocus = false): void {
+        elements.menuToggle.setAttribute("aria-expanded", String(isOpen));
+        elements.menuToggle.setAttribute("aria-label", isOpen ? "Cerrar menú" : "Abrir menú");
+        elements.sidebar.classList.toggle("is-open", isOpen);
+        elements.menuBackdrop.hidden = !isOpen;
+        elements.pageShell.inert = isOpen;
+        document.body.classList.toggle("menu-open", isOpen);
+        if (returnFocus) elements.menuToggle.focus();
+      }
+
+      function setupSidebarMenu(): void {
+        elements.menuToggle.addEventListener("click", () => {
+          setSidebarMenuOpen(!elements.sidebar.classList.contains("is-open"));
+          if (elements.sidebar.classList.contains("is-open")) elements.menuClose.focus();
+        });
+        elements.menuClose.addEventListener("click", () => setSidebarMenuOpen(false, true));
+        elements.menuBackdrop.addEventListener("click", () => setSidebarMenuOpen(false, true));
+        elements.sidebar.querySelectorAll<HTMLAnchorElement>("a").forEach(link => {
+          link.addEventListener("click", () => {
+            if (elements.sidebar.classList.contains("is-open")) setSidebarMenuOpen(false, true);
+          });
+        });
+        window.addEventListener("keydown", event => {
+          if (!elements.sidebar.classList.contains("is-open")) return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            setSidebarMenuOpen(false, true);
+            return;
+          }
+          if (event.key !== "Tab") return;
+
+          const focusable = Array.from(elements.sidebar.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'))
+            .filter(element => !element.hidden && element.getClientRects().length > 0);
+          if (focusable.length === 0) return;
+          const first = focusable[0];
+          const last = focusable[focusable.length - 1];
+          if (event.shiftKey && (document.activeElement === first || !elements.sidebar.contains(document.activeElement))) {
+            event.preventDefault();
+            last.focus();
+          } else if (!event.shiftKey && (document.activeElement === last || !elements.sidebar.contains(document.activeElement))) {
+            event.preventDefault();
+            first.focus();
+          }
+        });
+        window.addEventListener("resize", () => {
+          if (window.innerWidth > 700 && elements.sidebar.classList.contains("is-open")) {
+            setSidebarMenuOpen(false);
+          }
+        });
+      }
+
       function updateSidebarNavigation(): void {
+        if (elements.sidebar.classList.contains("is-open")) setSidebarMenuOpen(false, true);
         const links = Array.from(document.querySelectorAll<HTMLAnchorElement>(".sidebar-link"));
         const views = Array.from(document.querySelectorAll<HTMLElement>(".page-view"));
         const legacyRoutes: Record<string, string> = {
@@ -1573,8 +1792,13 @@ function isBookStatus(value: string): value is BookStatus {
           let hadController = Boolean(navigator.serviceWorker.controller);
 
           navigator.serviceWorker.addEventListener("controllerchange", () => {
-            if (hadController) window.location.reload();
-            else hadController = true;
+            if (hadController) {
+              window.location.reload();
+            } else {
+              hadController = true;
+              renderBooks();
+              renderCatalogSearchResults();
+            }
           });
 
           const setUpdateAvailable = () => {
@@ -1600,6 +1824,10 @@ function isBookStatus(value: string): value is BookStatus {
             registration.addEventListener("updatefound", () => watchInstallingWorker(registration?.installing ?? null));
             watchInstallingWorker(registration.installing);
             if (registration.waiting && navigator.serviceWorker.controller) setUpdateAvailable();
+            if (navigator.serviceWorker.controller) {
+              renderBooks();
+              renderCatalogSearchResults();
+            }
           }).catch(error => {
             console.error("No se pudo registrar el modo sin conexión.", error);
             showToast("No pudimos preparar el uso sin conexión.");
@@ -1711,13 +1939,12 @@ function isBookStatus(value: string): value is BookStatus {
           cover.textContent = result.title.trim().charAt(0).toLocaleUpperCase("es");
           if (result.coverUrl) {
             const image = document.createElement("img");
-            image.src = result.coverUrl;
             image.alt = "";
             image.loading = "lazy";
-            image.addEventListener("error", () => {
+            loadCoverImage(image, result.coverUrl, () => {
               cover.replaceChildren();
               cover.textContent = result.title.trim().charAt(0).toLocaleUpperCase("es");
-            }, { once: true });
+            });
             cover.replaceChildren(image);
           }
 
@@ -2044,6 +2271,21 @@ function isBookStatus(value: string): value is BookStatus {
           saveCustomization({ ...customization, motion: elements.motion.value });
         }
       });
+      elements.contrast.addEventListener("change", () => {
+        if (isContrastPreference(elements.contrast.value)) {
+          saveCustomization({ ...customization, contrast: elements.contrast.value });
+        }
+      });
+      elements.cornerStyle.addEventListener("change", () => {
+        if (isCornerStyle(elements.cornerStyle.value)) {
+          saveCustomization({ ...customization, cornerStyle: elements.cornerStyle.value });
+        }
+      });
+      elements.theme.addEventListener("change", () => {
+        if (isThemePreference(elements.theme.value)) {
+          saveCustomization({ ...customization, theme: elements.theme.value });
+        }
+      });
       elements.exportBackup.addEventListener("click", downloadBackup);
       elements.importBackup.addEventListener("click", () => elements.backupFile.click());
       elements.backupFile.addEventListener("change", () => {
@@ -2154,6 +2396,8 @@ function isBookStatus(value: string): value is BookStatus {
       getElement<HTMLElement>("today").textContent = new Intl.DateTimeFormat("es", {
         weekday: "long", day: "numeric", month: "long"
       }).format(new Date());
+      setupSidebarMenu();
+      setupScreenWakeLock();
       updateSidebarNavigation();
       window.addEventListener("hashchange", updateSidebarNavigation);
       setupPwa();

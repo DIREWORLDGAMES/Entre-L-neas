@@ -76,6 +76,54 @@
       --hero-glow: rgb(167 204 216 / 18%);
     }
 
+    :root[data-contrast="high"] {
+      --paper: #fff;
+      --white: #fff;
+      --ink: #17120f;
+      --muted: #453b35;
+      --line: #6b5b4f;
+      --green: #42291c;
+      --green-dark: #21150f;
+      --lime: #f0c967;
+      --orange: #65331f;
+      --paper-texture: transparent;
+    }
+
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --paper: #171613;
+      --white: #25231f;
+      --ink: #f2ede4;
+      --muted: #c2b9ad;
+      --line: #4c473f;
+      --green-dark: #171410;
+      --orange: #d99a73;
+      --shadow: 0 15px 40px rgb(0 0 0 / 32%);
+      --paper-texture: rgb(255 255 255 / 2%);
+    }
+
+    :root[data-theme="dark"][data-contrast="high"] {
+      --paper: #050505;
+      --white: #111;
+      --ink: #fff;
+      --muted: #eee;
+      --line: #c5c5c5;
+      --green-dark: #000;
+      --orange: #ffc18c;
+      --lime: #fff09a;
+      --paper-texture: transparent;
+      --shadow: none;
+    }
+
+    :root[data-corner-style="square"] :is(
+      .sidebar-link, .install-app-button, .sidebar-count, .sidebar-note, .menu-toggle, .sidebar-close,
+      .welcome, .stat, .home-shortcut, .panel, .button, .book-card, .book-cover, .empty-state,
+      .catalog-result, .catalog-result-cover, .search-wrap, .search-input, .filter-select,
+      .wishlist-button, .status-select, .progress-summary-card, .progress-chart-card, .chart-empty,
+      .progress-chart-unit, .preference-control select, .palette-option, .palette-swatch,
+      .donation-icon, .scanner-dialog, input, select, textarea, button
+    ):not(.menu-backdrop) { border-radius: 4px; }
+
     :root[data-font-style="classic"] { font-family: Georgia, "Times New Roman", serif; }
     :root[data-density="compact"] .book-grid { gap: 8px; }
     :root[data-density="compact"] .book-card { min-height: 145px; gap: 9px; padding: 10px; }
@@ -87,6 +135,7 @@
       transition-duration: .01ms !important;
       animation-duration: .01ms !important;
     }
+    :root[data-motion="reduced"] .app-shell { animation: none; }
 
     * { box-sizing: border-box; }
 
@@ -106,7 +155,9 @@
       min-height: 100vh;
       display: grid;
       grid-template-columns: 252px minmax(0, 1fr);
+      animation: app-opening .36s ease-out both;
     }
+    @keyframes app-opening { from { opacity: .84; } to { opacity: 1; } }
 
     .sidebar {
       position: sticky;
@@ -123,8 +174,15 @@
       color: var(--white);
     }
 
-    .sidebar-brand {
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin: 0 5px 43px;
+    }
+
+    .sidebar-brand {
+      margin: 0;
       color: var(--white);
     }
 
@@ -132,6 +190,7 @@
     .sidebar-brand-copy { display: grid; gap: 4px; }
     .sidebar-brand-copy strong { font-size: 17px; line-height: 1; }
     .sidebar-brand-copy small { color: rgb(255 254 250 / 47%); font-family: "DM Sans", sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 1.4px; }
+    .sidebar-close { display: none; }
     .sidebar-section-label { margin: 0 11px 12px; color: rgb(255 254 250 / 40%); font-size: 9px; font-weight: 700; letter-spacing: 1.5px; }
     .sidebar-nav { display: grid; gap: 6px; }
     .sidebar-link {
@@ -218,6 +277,29 @@
     }
 
     .topbar-context { color: var(--orange); font-size: 11px; font-weight: 700; letter-spacing: 1.1px; text-transform: uppercase; }
+    .menu-toggle {
+      display: none;
+      width: 42px;
+      height: 42px;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--white);
+      color: var(--green-dark);
+    }
+    .menu-toggle svg { width: 21px; height: 21px; }
+    .menu-toggle:focus-visible, .sidebar-close:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+    .menu-backdrop {
+      position: fixed;
+      z-index: 19;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: rgb(24 17 13 / 48%);
+    }
+    .menu-backdrop[hidden] { display: none !important; }
     .brand {
       display: flex;
       align-items: center;
@@ -485,6 +567,9 @@
       font: inherit;
       font-size: 12px;
     }
+    .wake-lock-option { display: flex; width: fit-content; align-items: center; gap: 9px; color: var(--ink); font-size: 12px; font-weight: 700; cursor: pointer; }
+    .wake-lock-option input { width: 18px; height: 18px; flex: 0 0 auto; margin: 0; accent-color: var(--green); }
+    .wake-lock-option input:disabled { cursor: not-allowed; }
     .palette-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .palette-option {
       min-width: 0;
@@ -861,10 +946,85 @@
     .toast.visible { opacity: 1; transform: translateY(0); }
     #welcome, #timer, #add-book, #library, #progress { scroll-margin-top: 24px; }
 
+    :root[data-theme="dark"] .sidebar,
+    :root[data-theme="dark"] .brand.sidebar-brand,
+    :root[data-theme="dark"] .install-app-button { color: #f2ede4; }
+    :root[data-theme="dark"] .topbar { border-bottom-color: var(--line); }
+    :root[data-theme="dark"] .welcome,
+    :root[data-theme="dark"] .welcome .stat { color: #fffefa; }
+    :root[data-theme="dark"] .home-shortcut {
+      border-color: var(--line);
+      border-bottom-color: var(--orange);
+      background: var(--white);
+      color: var(--ink);
+    }
+    :root[data-theme="dark"] .home-shortcut:hover { border-color: var(--orange); }
+    :root[data-theme="dark"] .shortcut-icon { background: color-mix(in srgb, var(--orange) 20%, var(--white)); color: var(--orange); }
+    :root[data-theme="dark"] .shortcut-arrow,
+    :root[data-theme="dark"] .book-series,
+    :root[data-theme="dark"] .book-progress-action,
+    :root[data-theme="dark"] .amazon-search-link,
+    :root[data-theme="dark"] .catalog-result-amazon { color: var(--orange); }
+    :root[data-theme="dark"] .button-quiet:hover { background: #38342e; }
+    :root[data-theme="dark"] .settings-status[data-state="error"],
+    :root[data-theme="dark"] .form-error,
+    :root[data-theme="dark"] .form-status[data-state="error"],
+    :root[data-theme="dark"] .catalog-search-status[data-state="error"],
+    :root[data-theme="dark"] .progress-dialog-error { color: #ff9a8d; }
+    :root[data-theme="dark"] .settings-status:not([data-state="error"]),
+    :root[data-theme="dark"] .form-status:not([data-state="error"]) { color: #b7d4a9; }
+    :root[data-theme="dark"] .catalog-search {
+      border-color: var(--line);
+      background: #201e1a;
+    }
+    :root[data-theme="dark"] .catalog-result {
+      border-color: var(--line);
+      background: var(--white);
+    }
+    :root[data-theme="dark"] .catalog-result-cover { color: #fffefa; }
+    :root[data-theme="dark"] .catalog-search-note,
+    :root[data-theme="dark"] .catalog-result-info small,
+    :root[data-theme="dark"] .book-isbn,
+    :root[data-theme="dark"] .manual-entry-divider,
+    :root[data-theme="dark"] .chart-row-title { color: var(--muted); }
+    :root[data-theme="dark"] label { color: var(--ink); }
+    :root[data-theme="dark"] input,
+    :root[data-theme="dark"] .status-select {
+      border-color: var(--line);
+      background: #25231f;
+      color: var(--ink);
+    }
+    :root[data-theme="dark"] .status-select,
+    :root[data-theme="dark"] .progress-chart-unit { background-color: #38342e; }
+    :root[data-theme="dark"] input::placeholder { color: #aaa195; }
+    :root[data-theme="dark"] input:focus,
+    :root[data-theme="dark"] .status-select:focus { border-color: var(--orange); }
+    :root[data-theme="dark"] .wishlist-button {
+      border-color: var(--line);
+      background: var(--white);
+      color: var(--ink);
+    }
+    :root[data-theme="dark"] .wishlist-button[aria-pressed="true"] { background: var(--green); color: #fffefa; }
+    :root[data-theme="dark"] .wishlist-count { background: rgb(255 255 255 / 12%); }
+    :root[data-theme="dark"] .progress-summary-card:first-child { color: #fffefa; }
+    :root[data-theme="dark"] .progress-chart-unit { color: var(--ink); }
+    :root[data-theme="dark"] .chart-track { background: #38342e; }
+    :root[data-theme="dark"] .chart-empty { border-color: var(--line); }
+    :root[data-theme="dark"] .book-card {
+      border-color: var(--line);
+      border-bottom-color: var(--orange);
+      background: linear-gradient(180deg, var(--white), var(--white) calc(100% - 5px), var(--orange) calc(100% - 5px));
+    }
+    :root[data-theme="dark"] .book-cover { color: rgb(255 255 255 / 92%); }
+    :root[data-theme="dark"] .delete-book { color: #c2b9ad; }
+    :root[data-theme="dark"] .delete-book:hover { background: #492c28; color: #ff9a8d; }
+    :root[data-theme="dark"] .timer-page-control input { color: #fffefa; }
+    :root[data-theme="dark"] .scanner-close { background: #38342e; color: var(--ink); }
+
     @media (max-width: 900px) {
       .app-shell { grid-template-columns: 78px minmax(0, 1fr); }
       .sidebar { align-items: center; padding: 24px 10px 16px; }
-      .sidebar-brand { display: none; }
+      .sidebar-header { display: none; }
       .sidebar-brand-copy, .sidebar-section-label, .sidebar-note, .sidebar-link-label, .sidebar-count { display: none; }
       .sidebar-nav { width: 100%; gap: 9px; }
       .sidebar-link { width: 48px; justify-content: center; padding: 0; }
@@ -878,18 +1038,51 @@
     }
     @media (max-width: 700px) {
       .app-shell { display: block; }
-      .sidebar { position: sticky; z-index: 4; width: 100%; height: auto; display: block; padding: 11px 5vw 0; }
-      .sidebar-brand { display: flex; justify-content: flex-start; margin: 0 0 10px; }
+      .sidebar {
+        position: fixed;
+        z-index: 21;
+        inset: 0 auto 0 0;
+        width: min(290px, 84vw);
+        height: 100vh;
+        height: 100dvh;
+        display: flex;
+        align-items: stretch;
+        overflow-y: auto;
+        padding: 24px 17px 20px;
+        transform: translateX(-100%);
+        visibility: hidden;
+        transition: transform .22s ease, visibility .22s ease;
+      }
+      .sidebar.is-open { transform: translateX(0); visibility: visible; }
+      .sidebar-header { display: flex; margin: 0 0 34px; }
+      .sidebar-brand { display: flex; justify-content: flex-start; margin: 0; }
       .sidebar-brand-copy { display: grid; }
-      .sidebar-section-label, .sidebar-note { display: none; }
-      .sidebar-nav { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 0 0 9px; }
-      .sidebar-link { width: auto; min-width: 0; min-height: 54px; flex-direction: column; justify-content: center; gap: 3px; padding: 5px 2px; font-size: 9px; white-space: normal; }
-      .sidebar-link svg { width: 17px; height: 17px; }
-      .sidebar-link-label { display: block; flex: none; line-height: 1.1; text-align: center; }
-      .install-app-button { width: 100%; min-height: 34px; margin: 0 0 8px; padding: 0 12px; font-size: 11px; }
-      .topbar { height: 62px; padding: 0 5vw; }
+      .sidebar-close {
+        display: grid;
+        width: 40px;
+        height: 40px;
+        place-items: center;
+        border: 1px solid rgb(255 255 255 / 22%);
+        border-radius: 10px;
+        background: rgb(255 255 255 / 8%);
+        color: var(--white);
+        font-size: 24px;
+        line-height: 1;
+      }
+      .sidebar-section-label { display: block; }
+      .sidebar-note { display: block; }
+      .sidebar-nav { width: 100%; grid-template-columns: 1fr; gap: 6px; margin: 0; padding: 0; }
+      .sidebar-link { width: auto; min-width: 0; min-height: 47px; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 12px; font-size: 12px; white-space: normal; }
+      .sidebar-link svg { width: 18px; height: 18px; }
+      .sidebar-link-label { display: block; flex: 1; line-height: normal; text-align: left; }
+      .sidebar-count { display: block; }
+      .install-app-button { width: 100%; min-height: 42px; margin: 15px 0 0; padding: 0 12px; font-size: 12px; }
+      .menu-toggle { display: inline-flex; flex: 0 0 auto; }
+      .topbar { height: 62px; justify-content: flex-start; gap: 13px; padding: 0 5vw; }
       .topbar-context { font-size: 9px; letter-spacing: .8px; }
-      #welcome, #timer, #add-book, #library, #progress { scroll-margin-top: 125px; }
+      .topbar-right { margin-left: auto; }
+      body.menu-open { overflow: hidden; }
+      #welcome, #timer, #add-book, #library, #progress { scroll-margin-top: 24px; }
     }
     @media (max-width: 620px) {
       .topbar { height: 66px; padding: 0 5vw; }
@@ -926,19 +1119,24 @@
       .donation-icon { width: 56px; height: 56px; border-radius: 16px; }
     }
     @media (prefers-reduced-motion: reduce) {
+      .app-shell { animation: none; }
       *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
     }
   </style>
 </head>
 <body>
   <div class="app-shell">
-    <aside class="sidebar" aria-label="Menú principal">
-      <a class="brand sidebar-brand" href="#home-view" aria-label="Entre Líneas, inicio">
-        <span class="sidebar-brand-copy">
-          <strong>Entre Líneas</strong>
-          <small>LECTURA A TU RITMO</small>
-        </span>
-      </a>
+    <button class="menu-backdrop" id="menu-backdrop" type="button" aria-label="Cerrar menú" tabindex="-1" hidden></button>
+    <aside class="sidebar" id="main-menu" aria-label="Menú principal">
+      <div class="sidebar-header">
+        <a class="brand sidebar-brand" href="#home-view" aria-label="Entre Líneas, inicio">
+          <span class="sidebar-brand-copy">
+            <strong>Entre Líneas</strong>
+            <small>LECTURA A TU RITMO</small>
+          </span>
+        </a>
+        <button class="sidebar-close" id="menu-close" type="button" aria-label="Cerrar menú">×</button>
+      </div>
       <p class="sidebar-section-label">TU ESPACIO</p>
       <nav class="sidebar-nav" aria-label="Navegación">
         <a class="sidebar-link" href="#home-view" aria-label="Inicio" aria-current="page">
@@ -982,8 +1180,11 @@
       </div>
     </aside>
 
-    <div class="page-shell">
+    <div class="page-shell" id="page-shell">
       <header class="topbar">
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-controls="main-menu" aria-expanded="false" aria-label="Abrir menú">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
         <span class="topbar-context">Tu librería personal</span>
         <div class="topbar-right">
           <span class="today" id="today"></span>
@@ -1224,7 +1425,7 @@
         <article class="panel settings-card settings-card-wide">
           <p class="eyebrow">Personalización</p>
           <h2>Lectura y pantalla</h2>
-          <p>Adapta la tipografía, el espacio de la biblioteca y el movimiento a tu preferencia. Estos ajustes se guardan en este dispositivo.</p>
+          <p>Adapta la tipografía, el espacio, el movimiento, el contraste, el tema y el estilo de las esquinas. Estos ajustes se guardan en este dispositivo.</p>
           <div class="preference-grid">
             <div class="preference-control">
               <label for="font-style">Tipografía</label>
@@ -1247,7 +1448,38 @@
                 <option value="reduced">Reducido</option>
               </select>
             </div>
+            <div class="preference-control">
+              <label for="theme-preference">Tema</label>
+              <select id="theme-preference">
+                <option value="light">Claro</option>
+                <option value="dark">Oscuro</option>
+              </select>
+            </div>
+            <div class="preference-control">
+              <label for="contrast-preference">Contraste</label>
+              <select id="contrast-preference">
+                <option value="standard">Estándar</option>
+                <option value="high">Alto contraste</option>
+              </select>
+            </div>
+            <div class="preference-control">
+              <label for="corner-style">Esquinas</label>
+              <select id="corner-style">
+                <option value="rounded">Redondeadas</option>
+                <option value="square">Rectas</option>
+              </select>
+            </div>
           </div>
+        </article>
+        <article class="panel settings-card settings-card-wide">
+          <p class="eyebrow">Lectura</p>
+          <h2>Mantener la pantalla encendida</h2>
+          <p>Evita que la pantalla se apague automáticamente mientras Entre Líneas está visible. El sistema puede suspender esta opción al cambiar de app o bloquear el dispositivo.</p>
+          <label class="wake-lock-option" for="keep-screen-on">
+            <input id="keep-screen-on" type="checkbox">
+            <span>Evitar que la pantalla se apague</span>
+          </label>
+          <p class="settings-hint" id="wake-lock-status" role="status" aria-live="polite"></p>
         </article>
         <article class="panel settings-card">
           <p class="eyebrow">Copia de seguridad</p>
@@ -1275,6 +1507,11 @@
             <button class="button button-quiet" id="update-app" type="button">Buscar actualizaciones</button>
           </div>
         </article>
+        <article class="panel settings-card">
+          <p class="eyebrow">Sin conexión</p>
+          <h2>Portadas guardadas</h2>
+          <p>Las portadas se guardan automáticamente al cargarse con internet; después puedes verlas sin conexión.</p>
+        </article>
       </div>
       <p class="settings-status" id="settings-status" role="status" aria-live="polite"></p>
     </section>
@@ -1290,9 +1527,9 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"></path></svg>
         </span>
         <div class="donation-copy">
-          <p class="eyebrow">Gracias por leer con nosotros</p>
-          <h2>Invítanos un café en Ko-fi</h2>
-          <p>Tu apoyo es voluntario y ayuda a mantener este espacio de lectura creciendo.</p>
+          <p class="eyebrow">Gracias por apoyar este proyecto</p>
+          <h2>Apoya a DWGS en Ko-fi</h2>
+          <p>Soy un creador pequeño que solamente busca explorar nuevos métodos de programación, sin embargo, tu contribución sería muy buena para motivarme a seguir.<br>Atte: "DWGS"</p>
           <a class="button button-primary donation-link" href="https://ko-fi.com/direworld" target="_blank" rel="noopener noreferrer">
             Apoyar en Ko-fi <span aria-hidden="true">↗</span>
           </a>
