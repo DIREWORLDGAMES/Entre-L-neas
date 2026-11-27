@@ -1,4 +1,4 @@
-const CACHE_NAME = "entre-lineas-shell-v10";
+const CACHE_NAME = "entre-lineas-shell-v11";
 const APP_BASE = new URL("./", self.location.href);
 const appUrl = path => new URL(path, APP_BASE).href;
 const APP_SHELL = [
@@ -34,12 +34,17 @@ self.addEventListener("install", event => {
           .map(url => url.href);
         await cache.addAll([...new Set(assets)]);
       })
-      .then(() => self.skipWaiting())
       .catch(error => {
         console.error("No se pudo preparar la app para uso sin conexión.", error);
         throw error;
       })
   );
+});
+
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") {
+    event.waitUntil(self.skipWaiting());
+  }
 });
 
 self.addEventListener("activate", event => {

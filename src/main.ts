@@ -243,6 +243,7 @@ function isBookStatus(value: string): value is BookStatus {
         exportBackup: getElement<HTMLButtonElement>("export-backup"),
         importBackup: getElement<HTMLButtonElement>("import-backup"),
         backupFile: getElement<HTMLInputElement>("backup-file"),
+        updateApp: getElement<HTMLButtonElement>("update-app"),
         settingsStatus: getElement<HTMLElement>("settings-status"),
         timerBook: getElement<HTMLSelectElement>("timer-book"),
         timerDisplay: getElement<HTMLElement>("timer-display"),
@@ -1533,6 +1534,7 @@ function isBookStatus(value: string): value is BookStatus {
         const installButton = document.getElementById("install-app");
         const isProduction = import.meta.env.PROD;
         let deferredPrompt: BeforeInstallPromptEvent | null = null;
+        elements.updateApp.hidden = !isProduction || !("serviceWorker" in navigator);
 
         if (installButton instanceof HTMLButtonElement) {
           installButton.hidden = !isProduction || window.matchMedia("(display-mode: standalone)").matches;
@@ -1567,9 +1569,79 @@ function isBookStatus(value: string): value is BookStatus {
         }
 
         if (isProduction && "serviceWorker" in navigator) {
-          void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(error => {
+          let registration: ServiceWorkerRegistration | null = null;
+          let hadController = Boolean(navigator.serviceWorker.controller);
+
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (hadController) window.location.reload();
+            else hadController = true;
+          });
+
+          const setUpdateAvailable = () => {
+            elements.updateApp.textContent = "Actualizar ahora";
+            elements.updateApp.disabled = false;
+            setSettingsStatus("Hay una actualización lista. Tus datos guardados se conservarán.");
+          };
+
+          const watchInstallingWorker = (worker: ServiceWorker | null) => {
+            worker?.addEventListener("statechange", () => {
+              if (worker.state === "installed" && navigator.serviceWorker.controller) {
+                setUpdateAvailable();
+              } else if (worker.state === "redundant") {
+                elements.updateApp.disabled = false;
+                console.error("La actualización de la app no se pudo instalar.");
+                setSettingsStatus("No se pudo instalar la actualización. Inténtalo de nuevo.", "error");
+              }
+            });
+          };
+
+          void navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).then(activeRegistration => {
+            registration = activeRegistration;
+            registration.addEventListener("updatefound", () => watchInstallingWorker(registration?.installing ?? null));
+            watchInstallingWorker(registration.installing);
+            if (registration.waiting && navigator.serviceWorker.controller) setUpdateAvailable();
+          }).catch(error => {
             console.error("No se pudo registrar el modo sin conexión.", error);
             showToast("No pudimos preparar el uso sin conexión.");
+          });
+
+          elements.updateApp.addEventListener("click", async () => {
+            if (!registration) {
+              setSettingsStatus("La app todavía se está preparando. Inténtalo de nuevo en un momento.", "error");
+              return;
+            }
+
+            const waitingWorker = registration.waiting;
+            if (waitingWorker) {
+              elements.updateApp.disabled = true;
+              setSettingsStatus("Actualizando la app. Tus datos guardados se conservarán.");
+              try {
+                waitingWorker.postMessage({ type: "SKIP_WAITING" });
+              } catch (error) {
+                console.error("No se pudo activar la actualización de la app.", error);
+                elements.updateApp.disabled = false;
+                setSettingsStatus("No se pudo iniciar la actualización. Inténtalo de nuevo.", "error");
+              }
+              return;
+            }
+
+            elements.updateApp.disabled = true;
+            setSettingsStatus("Buscando actualizaciones…");
+            try {
+              await registration.update();
+              if (registration.waiting) {
+                setUpdateAvailable();
+              } else if (registration.installing) {
+                setSettingsStatus("Descargando la actualización…");
+              } else {
+                elements.updateApp.disabled = false;
+                setSettingsStatus("Ya tienes la versión más reciente.");
+              }
+            } catch (error) {
+              console.error("No se pudo buscar actualizaciones de la app.", error);
+              elements.updateApp.disabled = false;
+              setSettingsStatus("No se pudieron buscar actualizaciones. Revisa tu conexión e inténtalo de nuevo.", "error");
+            }
           });
         }
       }
