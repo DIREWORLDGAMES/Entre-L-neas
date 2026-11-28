@@ -210,6 +210,16 @@ function isBookStatus(value: string): value is BookStatus {
         keepScreenOn: false,
         theme: "light"
       };
+      const sidebarMessages = [
+        ["Un capítulo a la vez", "Un espacio tranquilo para seguir el hilo de tus historias."],
+        ["Cada página abre una puerta", "Deja que la curiosidad elija tu próximo destino."],
+        ["Lee a tu propio ritmo", "No hay prisa cuando disfrutas el camino."],
+        ["Tu próxima historia te espera", "Haz un lugar en tu día para leer un poco."],
+        ["Un libro, mil caminos", "Sigue leyendo y descubre a dónde te lleva."],
+        ["Regálate unos minutos", "A veces, una página basta para cambiar el día."],
+        ["Cada lectura suma", "Celebra cada capítulo y cada pequeño avance."],
+        ["Vuelve a tus historias favoritas", "Siempre hay algo nuevo que encontrar entre sus páginas."]
+      ] as const;
       const coverColors = ["#667763", "#a76c51", "#6f7791", "#b08e56", "#597e79", "#8d6474"];
       const elements = {
         form: getElement<HTMLFormElement>("book-form"),
@@ -1415,6 +1425,12 @@ function isBookStatus(value: string): value is BookStatus {
         toastTimeout = setTimeout(() => elements.toast.classList.remove("visible"), 2800);
       }
 
+      function renderSidebarMessage(): void {
+        const [title, message] = sidebarMessages[Math.floor(Math.random() * sidebarMessages.length)];
+        getElement<HTMLElement>("sidebar-note-title").textContent = title;
+        getElement<HTMLElement>("sidebar-note-message").textContent = message;
+      }
+
       function render() {
         renderStats();
         renderTimer();
@@ -2610,6 +2626,7 @@ function isBookStatus(value: string): value is BookStatus {
       getElement<HTMLElement>("today").textContent = new Intl.DateTimeFormat("es", {
         weekday: "long", day: "numeric", month: "long"
       }).format(new Date());
+      renderSidebarMessage();
       setupSidebarMenu();
       setupScreenWakeLock();
       updateSidebarNavigation();
