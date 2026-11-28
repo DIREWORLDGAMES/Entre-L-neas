@@ -200,6 +200,7 @@ function isBookStatus(value: string): value is BookStatus {
       const TIMER_KEY = "entre-lineas-timer-v1";
       const PALETTE_KEY = "entre-lineas-palette-v1";
       const CUSTOMIZATION_KEY = "entre-lineas-customization-v1";
+      const STORE_PRICES_KEY = "entre-lineas-store-prices-v1";
       const DEFAULT_CUSTOMIZATION: Customization = {
         fontStyle: "modern",
         density: "comfortable",
@@ -250,6 +251,7 @@ function isBookStatus(value: string): value is BookStatus {
         filter: getElement<HTMLSelectElement>("filter"),
         wishlistFilter: getElement<HTMLButtonElement>("wishlist-filter"),
         wishlistCount: getElement<HTMLElement>("wishlist-count"),
+        storeGrid: getElement<HTMLElement>("store-grid"),
         paletteOptions: getElement<HTMLDivElement>("palette-options"),
         fontStyle: getElement<HTMLSelectElement>("font-style"),
         density: getElement<HTMLSelectElement>("library-density"),
@@ -1418,12 +1420,14 @@ function isBookStatus(value: string): value is BookStatus {
         renderTimer();
         renderBooks();
         renderProgress();
+        renderStore();
       }
 
       function renderStats() {
         getElement<HTMLElement>("stat-total").textContent = String(books.length);
         getElement<HTMLElement>("sidebar-book-count").textContent = String(books.length);
         elements.wishlistCount.textContent = String(books.filter(book => book.status === "Deseado").length);
+        getElement<HTMLElement>("store-wishlist-count").textContent = String(books.filter(book => book.status === "Deseado").length);
         getElement<HTMLElement>("stat-reading").textContent = String(books.filter(book => book.status === "Leyendo").length);
         const totalSeconds = books.reduce((total, book) => total + getBookReadingSeconds(book), 0);
         const hours = totalSeconds / 3600;
@@ -1525,6 +1529,153 @@ function isBookStatus(value: string): value is BookStatus {
         const minutes = Math.floor(seconds / 60);
         if (minutes === 0) return compact ? "<1m" : "<1 min";
         return compact ? `${minutes}m` : `${minutes} min`;
+      }
+
+      interface StorePrice {
+        amazon: number | null;
+        mercadolibre: number | null;
+      }
+
+      function loadStorePrices(): Record<string, StorePrice> {
+        try {
+          const saved: unknown = JSON.parse(localStorage.getItem(STORE_PRICES_KEY) || "{}");
+          if (typeof saved !== "object" || saved === null || Array.isArray(saved)) return {};
+          const result: Record<string, StorePrice> = {};
+          for (const [bookId, value] of Object.entries(saved)) {
+            if (typeof value !== "object" || value === null) continue;
+            const price = value as Partial<StorePrice>;
+            result[bookId] = {
+              amazon: typeof price.amazon === "number" && Number.isFinite(price.amazon) && price.amazon >= 0 ? price.amazon : null,
+              mercadolibre: typeof price.mercadolibre === "number" && Number.isFinite(price.mercadolibre) && price.mercadolibre >= 0 ? price.mercadolibre : null
+            };
+          }
+          return result;
+        } catch (error) {
+          console.error("No se pudieron recuperar los precios guardados.", error);
+          return {};
+        }
+      }
+
+      function saveStorePrices(prices: Record<string, StorePrice>): void {
+        try {
+          localStorage.setItem(STORE_PRICES_KEY, JSON.stringify(prices));
+        } catch (error) {
+          console.error("No se pudieron guardar los precios.", error);
+          showToast("No se pudieron guardar los precios. Revisa el almacenamiento del navegador.");
+        }
+      }
+
+      const storePrices = loadStorePrices();
+
+      function formatStorePrice(price: number): string {
+        return price.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
+      }
+
+      function renderStore(): void {
+        const wishlist = books.filter(book => book.status === "Deseado");
+        elements.storeGrid.replaceChildren();
+
+        if (wishlist.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          empty.innerHTML = '<div class="empty-icon" aria-hidden="true">♡</div><h3>Tu lista de deseados está vacía</h3><p>Marca un libro como “Deseado” desde la biblioteca para compararlo aquí.</p>';
+          elements.storeGrid.append(empty);
+          return;
+        }
+
+        for (const book of wishlist) {
+          const query = `${book.title} ${book.author}`.trim();
+          const encodedQuery = encodeURIComponent(query);
+          const prices = storePrices[book.id] || { amazon: null, mercadolibre: null };
+
+          const card = document.createElement("article");
+          card.className = "panel store-card";
+
+          const cover = document.createElement("div");
+          cover.className = "book-cover store-card-cover";
+          cover.style.setProperty("--cover", coverColors[Math.abs(book.id.split("").reduce((total, character) => total + character.charCodeAt(0), 0)) % coverColors.length]);
+          if (book.coverUrl) {
+            const image = document.createElement("img");
+            image.alt = "";
+            image.loading = "lazy";
+            loadCoverImage(image, book.coverUrl, () => {
+              cover.replaceChildren(document.createTextNode(book.title.charAt(0).toLocaleUpperCase("es") || "•"));
+            });
+            cover.append(image);
+          } else {
+            cover.textContent = book.title.charAt(0).toLocaleUpperCase("es") || "•";
+          }
+
+          const info = document.createElement("div");
+          info.className = "store-card-info";
+          const title = document.createElement("h2");
+          title.textContent = book.title;
+          const author = document.createElement("p");
+          author.className = "store-card-author";
+          author.textContent = book.author;
+
+          const links = document.createElement("div");
+          links.className = "store-links";
+          const amazon = document.createElement("a");
+          amazon.className = "store-link amazon";
+          amazon.href = `https://www.amazon.com.mx/s?k=${encodedQuery}`;
+          amazon.target = "_blank";
+          amazon.rel = "noopener noreferrer";
+          amazon.textContent = "Buscar en Amazon ↗";
+          const mercadoLibre = document.createElement("a");
+          mercadoLibre.className = "store-link mercadolibre";
+          mercadoLibre.href = `https://listado.mercadolibre.com.mx/${encodedQuery.replaceAll("%20", "-")}`;
+          mercadoLibre.target = "_blank";
+          mercadoLibre.rel = "noopener noreferrer";
+          mercadoLibre.textContent = "Buscar en Mercado Libre ↗";
+          links.append(amazon, mercadoLibre);
+
+          const priceFields = document.createElement("div");
+          priceFields.className = "store-prices";
+          for (const [site, label] of [["amazon", "Amazon"], ["mercadolibre", "Mercado Libre"]] as const) {
+            const field = document.createElement("div");
+            field.className = "store-price-field";
+            const inputLabel = document.createElement("label");
+            const inputId = `store-price-${book.id}-${site}`;
+            inputLabel.htmlFor = inputId;
+            inputLabel.textContent = `${label} (MXN)`;
+            const input = document.createElement("input");
+            input.id = inputId;
+            input.type = "number";
+            input.min = "0";
+            input.step = "0.01";
+            input.inputMode = "decimal";
+            input.value = prices[site] === null ? "" : String(prices[site]);
+            input.dataset.storeBook = book.id;
+            input.dataset.storeSite = site;
+            input.setAttribute("aria-label", `Precio en ${label} para ${book.title}`);
+            field.append(inputLabel, input);
+            priceFields.append(field);
+          }
+
+          const best = document.createElement("div");
+          best.className = "store-best-price";
+          const comparison = document.createElement("span");
+          const comparisonValue = document.createElement("strong");
+          const validPrices = [
+            ...(prices.amazon !== null ? [["Amazon", prices.amazon] as const] : []),
+            ...(prices.mercadolibre !== null ? [["Mercado Libre", prices.mercadolibre] as const] : [])
+          ];
+          if (validPrices.length === 0) {
+            comparison.textContent = "Sin precios registrados";
+            comparisonValue.textContent = "";
+          } else {
+            validPrices.sort((left, right) => left[1] - right[1]);
+            comparison.textContent = "Mejor precio";
+            comparisonValue.textContent = `${validPrices[0][0]} · ${formatStorePrice(validPrices[0][1])}`;
+          }
+          best.append(comparison, comparisonValue);
+          priceFields.append(best);
+
+          info.append(title, author, links, priceFields);
+          card.append(cover, info);
+          elements.storeGrid.append(card);
+        }
       }
 
       function renderTimer() {
@@ -1653,10 +1804,39 @@ function isBookStatus(value: string): value is BookStatus {
           progressAction.setAttribute("aria-label", `Actualizar páginas leídas de ${book.title}`);
           const pagesRead = getBookPagesRead(book);
           const pageCount = getBookPageCount(book);
-          progressAction.textContent = pagesRead > 0
-            ? `${pagesRead.toLocaleString("es")}${pageCount ? ` de ${pageCount.toLocaleString("es")}` : ""} páginas leídas`
-            : "＋ Registrar páginas";
-          info.append(progressAction);
+          const progress = document.createElement("div");
+          progress.className = "book-progress";
+          if (pageCount === null) {
+            progressAction.textContent = pagesRead > 0
+              ? `${pagesRead.toLocaleString("es")} páginas leídas`
+              : "＋ Registrar páginas";
+            progress.append(progressAction);
+          } else {
+            const completedPages = Math.min(pagesRead, pageCount);
+            const percentage = Math.round(completedPages / pageCount * 100);
+            const progressLabel = document.createElement("div");
+            progressLabel.className = "book-progress-label";
+            progressAction.textContent = `${pagesRead.toLocaleString("es")} de ${pageCount.toLocaleString("es")} páginas`;
+            const percent = document.createElement("span");
+            percent.className = "book-progress-percent";
+            percent.textContent = `${percentage}%`;
+            progressLabel.append(progressAction, percent);
+
+            const track = document.createElement("div");
+            track.className = "book-progress-track";
+            track.setAttribute("role", "progressbar");
+            track.setAttribute("aria-label", `Progreso de lectura de ${book.title}`);
+            track.setAttribute("aria-valuemin", "0");
+            track.setAttribute("aria-valuemax", String(pageCount));
+            track.setAttribute("aria-valuenow", String(completedPages));
+            track.setAttribute("aria-valuetext", `${percentage}% · ${pagesRead} de ${pageCount} páginas`);
+            const fill = document.createElement("span");
+            fill.className = "book-progress-fill";
+            fill.style.width = `${percentage}%`;
+            track.append(fill);
+            progress.append(progressLabel, track);
+          }
+          info.append(progress);
 
           const remove = document.createElement("button");
           remove.className = "delete-book";
@@ -1731,6 +1911,7 @@ function isBookStatus(value: string): value is BookStatus {
           "#progress": "#progress-view",
           "#timer": "#timer-view",
           "#add-book": "#add-book-view",
+          "#store": "#store-view",
           "#settings": "#settings-view"
         };
         const hash = window.location.hash || "#home-view";
@@ -2303,6 +2484,39 @@ function isBookStatus(value: string): value is BookStatus {
       elements.wishlistFilter.addEventListener("click", () => {
         elements.filter.value = elements.filter.value === "Deseado" ? "" : "Deseado";
         renderBooks();
+      });
+      elements.storeGrid.addEventListener("input", event => {
+        const input = event.target;
+        if (!(input instanceof HTMLInputElement)) return;
+        const bookId = input.dataset.storeBook;
+        const site = input.dataset.storeSite;
+        if (!bookId || (site !== "amazon" && site !== "mercadolibre")) return;
+        const value = input.value.trim();
+        const numericValue = value === "" ? null : Number(value);
+        const current = storePrices[bookId] || { amazon: null, mercadolibre: null };
+        if (numericValue !== null && (!Number.isFinite(numericValue) || numericValue < 0)) return;
+        storePrices[bookId] = { ...current, [site]: numericValue };
+        saveStorePrices(storePrices);
+        const card = input.closest<HTMLElement>(".store-card");
+        if (!card) return;
+        const best = card.querySelector<HTMLElement>(".store-best-price");
+        if (!best) return;
+        const label = best.querySelector("span");
+        const valueLabel = best.querySelector("strong");
+        if (!label || !valueLabel) return;
+        const updated = storePrices[bookId];
+        const validPrices = [
+          ...(updated.amazon !== null ? [["Amazon", updated.amazon] as const] : []),
+          ...(updated.mercadolibre !== null ? [["Mercado Libre", updated.mercadolibre] as const] : [])
+        ];
+        if (validPrices.length === 0) {
+          label.textContent = "Sin precios registrados";
+          valueLabel.textContent = "";
+        } else {
+          validPrices.sort((left, right) => left[1] - right[1]);
+          label.textContent = "Mejor precio";
+          valueLabel.textContent = `${validPrices[0][0]} · ${formatStorePrice(validPrices[0][1])}`;
+        }
       });
       elements.timerBook.addEventListener("change", renderTimer);
       elements.scanOpen.addEventListener("click", () => { void openScanner(); });

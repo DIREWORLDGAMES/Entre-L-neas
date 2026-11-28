@@ -828,12 +828,44 @@
     .chart-row-label { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: 10px; }
     .chart-row-title { min-width: 0; overflow: hidden; color: #634b3b; text-overflow: ellipsis; white-space: nowrap; }
     .chart-row-value { flex: 0 0 auto; color: var(--ink); font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
-    .chart-track { height: 7px; overflow: hidden; border-radius: 999px; background: #eadfcf; }
-    .chart-fill { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, #8b5140, #d4ad67); }
-    .chart-fill-pages { background: linear-gradient(90deg, #ad6546, #dda86a); }
+    .chart-track { height: 10px; overflow: hidden; border: 1px solid var(--line); border-radius: 999px; background: #eadfcf; }
+    .chart-fill { height: 100%; display: block; min-width: 3px; border-radius: inherit; background: linear-gradient(90deg, var(--orange), var(--lime)); box-shadow: 0 0 8px color-mix(in srgb, var(--orange) 28%, transparent); transition: width .35s ease; }
+    .chart-fill-pages { background: linear-gradient(90deg, var(--lime), var(--orange)); }
     .chart-empty { padding: 21px 12px; border: 1px dashed #d7c4aa; border-radius: 10px; color: var(--muted); font-size: 11px; line-height: 1.5; text-align: center; }
 
     .book-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+    .store-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .store-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding: 13px 14px;
+      border: 1px solid #dcc58f;
+      border-radius: 10px;
+      background: #fff7d9;
+      color: #6d5734;
+      font-size: 11px;
+      line-height: 1.55;
+    }
+    .store-warning strong { color: #544326; }
+    .store-warning-icon { flex: 0 0 auto; font-size: 15px; }
+    .store-card { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 14px; padding: 16px; }
+    .store-card-cover { width: 64px; height: 92px; }
+    .store-card-info { min-width: 0; }
+    .store-card-info h2 { overflow: hidden; margin: 2px 0 4px; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+    .store-card-author { margin: 0 0 12px; color: var(--muted); font-size: 11px; }
+    .store-links { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .store-link { min-height: 38px; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 9px; color: var(--ink); font-size: 11px; font-weight: 750; text-align: center; text-decoration: none; }
+    .store-link:hover { border-color: #b99a70; background: #f8f0df; }
+    .store-link.amazon { border-color: #d6b965; background: #fff7d6; }
+    .store-link.mercadolibre { border-color: #e0bd48; background: #fff4b8; }
+    .store-prices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .store-price-field { display: grid; gap: 5px; }
+    .store-price-field label { color: var(--muted); font-size: 9px; font-weight: 750; }
+    .store-price-field input { width: 100%; height: 38px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; font-size: 12px; font-variant-numeric: tabular-nums; }
+    .store-best-price { grid-column: 1 / -1; min-height: 34px; display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 2px; padding: 7px 9px; border-radius: 8px; background: #edf1e6; color: var(--green-dark); font-size: 10px; }
+    .store-best-price strong { font-size: 13px; }
     .book-card {
       position: relative;
       min-height: 175px;
@@ -887,17 +919,25 @@
       font-size: 9px;
     }
     .book-time { color: var(--muted); font-size: 9px; white-space: nowrap; }
+    .book-progress { display: grid; gap: 6px; margin-top: 9px; }
+    .book-progress-label { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
     .book-progress-action {
-      margin-top: 9px;
+      min-width: 0;
       padding: 0;
       border: 0;
       background: transparent;
-      color: #855341;
-      font-size: 9px;
+      color: var(--orange);
+      font-size: 10px;
       font-weight: 700;
+      overflow: hidden;
       text-align: left;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
     .book-progress-action:hover { color: var(--green-dark); text-decoration: underline; }
+    .book-progress-percent { flex: 0 0 auto; color: var(--muted); font-size: 9px; font-variant-numeric: tabular-nums; }
+    .book-progress-track { height: 7px; overflow: hidden; border: 1px solid var(--line); border-radius: 999px; background: #eadfcf; }
+    .book-progress-fill { height: 100%; display: block; border-radius: inherit; background: linear-gradient(90deg, var(--orange), var(--lime)); transition: width .35s ease; }
     .delete-book {
       position: absolute;
       top: 8px;
@@ -1009,6 +1049,7 @@
     :root[data-theme="dark"] .progress-summary-card:first-child { color: #fffefa; }
     :root[data-theme="dark"] .progress-chart-unit { color: var(--ink); }
     :root[data-theme="dark"] .chart-track { background: #38342e; }
+    :root[data-theme="dark"] .book-progress-track { background: #38342e; }
     :root[data-theme="dark"] .chart-empty { border-color: var(--line); }
     :root[data-theme="dark"] .book-card {
       border-color: var(--line);
@@ -1106,6 +1147,9 @@
       .catalog-result-actions { grid-column: 1 / -1; flex-direction: row; }
       .catalog-result-actions .button { flex: 1; padding: 0 6px; white-space: normal; }
       .book-grid { grid-template-columns: minmax(0, 1fr); }
+      .store-grid { grid-template-columns: 1fr; }
+      .store-card { grid-template-columns: 56px minmax(0, 1fr); }
+      .store-card-cover { width: 56px; height: 82px; }
       .book-card { min-height: 145px; }
       .delete-book { opacity: 1; }
       .progress-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
@@ -1159,6 +1203,11 @@
         <a class="sidebar-link" href="#add-book-view" aria-label="Agregar un libro">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v8M8 12h8"></path></svg>
           <span class="sidebar-link-label">Agregar libro</span>
+        </a>
+        <a class="sidebar-link" href="#store-view" aria-label="Comparar precios en tiendas">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M4 10h16l-1.5 10h-13zM7 10V7a5 5 0 0 1 10 0v3"></path></svg>
+          <span class="sidebar-link-label">Tienda</span>
+          <span class="sidebar-count" id="store-wishlist-count">0</span>
         </a>
         <a class="sidebar-link" href="#settings-view" aria-label="Configuración">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.6 2.77-.08-.03a1.7 1.7 0 0 0-1.82.35l-.05.04h-3.2l-.02-.08a1.7 1.7 0 0 0-1.35-1.31l-.08-.02-1.6-2.77.06-.06A1.7 1.7 0 0 0 10.4 14l-.03-.08v-3.2l.08-.02a1.7 1.7 0 0 0 1.31-1.35l.02-.08 2.77-1.6.06.06a1.7 1.7 0 0 0 1.88.34l.06-.03 2.77 1.6-.03.08a1.7 1.7 0 0 0 .35 1.82l.04.05v3.2l-.08.02a1.7 1.7 0 0 0-1.31 1.35z"></path></svg>
@@ -1391,6 +1440,19 @@
           </div>
         </form>
       </article>
+    </section>
+
+    <section class="page-view" id="store-view" aria-labelledby="store-title" hidden>
+      <div class="page-view-heading">
+        <p class="eyebrow">Lista de deseados</p>
+        <h1 id="store-title">Comparar precios</h1>
+        <p>Busca tus libros deseados en Amazon y Mercado Libre, registra los precios que encuentres y compara cuál conviene más.</p>
+      </div>
+      <aside class="store-warning" role="note" aria-label="Aviso de compra">
+        <span class="store-warning-icon" aria-hidden="true">⚠</span>
+        <p><strong>Somos ajenos a las tiendas.</strong> Entre Líneas no administra Amazon ni Mercado Libre, ni garantiza precios, existencias, envíos o transacciones. Te recomendamos comprar con precaución y verificar siempre la información, el vendedor y los métodos de pago en el sitio oficial.</p>
+      </aside>
+      <div class="store-grid" id="store-grid" aria-live="polite"></div>
     </section>
 
     <section class="page-view" id="settings-view" aria-labelledby="settings-title" hidden>
