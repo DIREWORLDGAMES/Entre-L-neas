@@ -850,6 +850,7 @@
     .streak-day { min-width: 0; display: grid; justify-items: center; gap: 4px; color: var(--muted); font-size: 8px; }
     .streak-dot { width: 12px; height: 12px; border: 1px solid var(--line); border-radius: 50%; background: #eadfcf; }
     .streak-day.is-active .streak-dot { border-color: var(--orange); background: linear-gradient(135deg, var(--orange), var(--lime)); box-shadow: 0 0 7px rgb(197 139 73 / 28%); }
+    .streak-day.has-reading .streak-dot { border-color: var(--orange); background: color-mix(in srgb, var(--orange) 35%, var(--white)); }
     .streak-day.is-active { color: var(--ink); font-weight: 700; }
     .progress-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .progress-chart-card { min-width: 0; padding: 21px 22px 17px; }
@@ -1264,7 +1265,7 @@
         <span class="sidebar-streak-icon" aria-hidden="true">🔥</span>
         <span class="sidebar-streak-copy">
           <strong id="sidebar-streak-count">0 días</strong>
-          <small>Racha · mínimo 25 min</small>
+          <small>Racha · meta diaria: 25 min</small>
         </span>
       </a>
       <div class="sidebar-note">
@@ -1376,8 +1377,8 @@
         <article class="progress-summary-card streak-summary-card">
           <span class="progress-summary-label">Racha de lectura</span>
           <strong class="progress-summary-value" id="progress-streak">0 días</strong>
-          <span class="progress-summary-detail" id="progress-streak-detail">Tu mejor racha: 0 días · mínimo 25 min</span>
-          <div class="streak-week" id="streak-week" aria-label="Actividad de lectura de los últimos siete días"></div>
+          <span class="progress-summary-detail" id="progress-streak-detail">Tu mejor racha: 0 días · meta diaria: 25 min</span>
+          <div class="streak-week" id="streak-week" aria-label="Cumplimiento de la meta diaria de 25 minutos durante los últimos siete días"></div>
         </article>
       </div>
       <div class="progress-chart-grid">

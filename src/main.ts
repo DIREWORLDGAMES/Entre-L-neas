@@ -55,6 +55,7 @@ interface AppBackup {
   books: Book[];
   timer: TimerState | null;
   readingDates?: string[];
+  readingSecondsByDate?: Record<string, number>;
   fontStyle?: FontStyle;
   density?: Density;
   motion?: MotionPreference;
@@ -203,6 +204,7 @@ function isBookStatus(value: string): value is BookStatus {
       const CUSTOMIZATION_KEY = "entre-lineas-customization-v1";
       const STORE_PRICES_KEY = "entre-lineas-store-prices-v1";
       const READING_DATES_KEY = "entre-lineas-reading-dates-v1";
+      const READING_SECONDS_BY_DATE_KEY = "entre-lineas-reading-seconds-by-date-v1";
       const MIN_STREAK_SECONDS = 25 * 60;
       const DEFAULT_CUSTOMIZATION: Customization = {
         fontStyle: "modern",
@@ -309,6 +311,7 @@ function isBookStatus(value: string): value is BookStatus {
       let palette = loadPalette();
       let customization = loadCustomization();
       let readingDates = loadReadingDates();
+      let readingSecondsByDate = loadReadingSecondsByDate();
       let screenWakeLock: WakeLockSentinel | null = null;
       let wakeLockGeneration = 0;
       applyPalette(palette);
@@ -382,6 +385,21 @@ function isBookStatus(value: string): value is BookStatus {
         return value === "light" || value === "dark";
       }
 
+      function isReadingDate(value: unknown): value is string {
+        if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+        const [year, month, day] = value.split("-").map(Number);
+        const date = new Date(0);
+        date.setFullYear(year, month - 1, day);
+        return date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day;
+      }
+
+      function isReadingSecondsByDate(value: unknown): value is Record<string, number> {
+        return typeof value === "object" && value !== null && !Array.isArray(value) &&
+          Object.entries(value).every(([date, seconds]) =>
+            isReadingDate(date) && typeof seconds === "number" && Number.isFinite(seconds) && seconds >= 0
+          );
+      }
+
       function isTimerState(value: unknown, candidateBooks: Book[]): value is TimerState {
         if (typeof value !== "object" || value === null) return false;
         const state = value as Partial<TimerState>;
@@ -405,7 +423,8 @@ function isBookStatus(value: string): value is BookStatus {
           isBookArray(backupBooks) &&
           (backup.timer === null || isTimerState(backup.timer, backupBooks)) &&
           (backup.readingDates === undefined || (Array.isArray(backup.readingDates) &&
-            backup.readingDates.every(value => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)))) &&
+            backup.readingDates.every(isReadingDate))) &&
+          (backup.readingSecondsByDate === undefined || isReadingSecondsByDate(backup.readingSecondsByDate)) &&
           (backup.version === 1 ||
             (isFontStyle(backup.fontStyle) && isDensity(backup.density) && isMotionPreference(backup.motion))) &&
           (backup.contrast === undefined || isContrastPreference(backup.contrast)) &&
@@ -592,11 +611,21 @@ function isBookStatus(value: string): value is BookStatus {
         try {
           const parsed: unknown = JSON.parse(localStorage.getItem(READING_DATES_KEY) || "[]");
           return Array.isArray(parsed)
-            ? parsed.filter((value): value is string => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value))
+            ? [...new Set(parsed.filter(isReadingDate))].sort()
             : [];
         } catch (error) {
           console.error("No se pudo recuperar la racha de lectura.", error);
           return [];
+        }
+      }
+
+      function loadReadingSecondsByDate(): Record<string, number> {
+        try {
+          const parsed: unknown = JSON.parse(localStorage.getItem(READING_SECONDS_BY_DATE_KEY) || "{}");
+          return isReadingSecondsByDate(parsed) ? parsed : {};
+        } catch (error) {
+          console.error("No se pudo recuperar el tiempo diario de lectura.", error);
+          return {};
         }
       }
 
@@ -609,6 +638,15 @@ function isBookStatus(value: string): value is BookStatus {
         }
       }
 
+      function saveReadingSecondsByDate(): void {
+        try {
+          localStorage.setItem(READING_SECONDS_BY_DATE_KEY, JSON.stringify(readingSecondsByDate));
+        } catch (error) {
+          console.error("No se pudo guardar el tiempo diario de lectura.", error);
+          showToast("No se pudo guardar el tiempo diario de lectura.");
+        }
+      }
+
       function getDateKey(date: Date): string {
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -618,7 +656,9 @@ function isBookStatus(value: string): value is BookStatus {
 
       function getDateFromKey(key: string): Date {
         const [year, month, day] = key.split("-").map(Number);
-        return new Date(year, month - 1, day);
+        const date = new Date(0);
+        date.setFullYear(year, month - 1, day);
+        return date;
       }
 
       function registerReadingDay(): void {
@@ -628,6 +668,14 @@ function isBookStatus(value: string): value is BookStatus {
           readingDates.sort();
           saveReadingDates();
         }
+      }
+
+      function recordReadingTime(seconds: number): void {
+        if (!Number.isFinite(seconds) || seconds <= 0) return;
+        const today = getDateKey(new Date());
+        readingSecondsByDate[today] = (readingSecondsByDate[today] ?? 0) + seconds;
+        saveReadingSecondsByDate();
+        if (readingSecondsByDate[today] >= MIN_STREAK_SECONDS) registerReadingDay();
       }
 
       function getReadingStreak(): { current: number; longest: number } {
@@ -707,7 +755,10 @@ function isBookStatus(value: string): value is BookStatus {
       }
 
       function persistBackup(backup: AppBackup): boolean {
-        const keys = [STORAGE_KEY, TIMER_KEY, PALETTE_KEY, CUSTOMIZATION_KEY, READING_DATES_KEY];
+        const keys = [
+          STORAGE_KEY, TIMER_KEY, PALETTE_KEY, CUSTOMIZATION_KEY,
+          READING_DATES_KEY, READING_SECONDS_BY_DATE_KEY
+        ];
         const previousValues = new Map<string, string | null>();
         try {
           for (const key of keys) previousValues.set(key, localStorage.getItem(key));
@@ -716,6 +767,11 @@ function isBookStatus(value: string): value is BookStatus {
           else localStorage.removeItem(TIMER_KEY);
           if (backup.readingDates) localStorage.setItem(READING_DATES_KEY, JSON.stringify(backup.readingDates));
           else localStorage.removeItem(READING_DATES_KEY);
+          if (backup.readingSecondsByDate) {
+            localStorage.setItem(READING_SECONDS_BY_DATE_KEY, JSON.stringify(backup.readingSecondsByDate));
+          } else {
+            localStorage.removeItem(READING_SECONDS_BY_DATE_KEY);
+          }
           localStorage.setItem(PALETTE_KEY, backup.palette);
           const importedCustomization: Customization = {
             fontStyle: backup.fontStyle ?? DEFAULT_CUSTOMIZATION.fontStyle,
@@ -762,6 +818,7 @@ function isBookStatus(value: string): value is BookStatus {
             books,
             timer,
             readingDates,
+            readingSecondsByDate,
             ...customization
           };
           const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
@@ -800,7 +857,8 @@ function isBookStatus(value: string): value is BookStatus {
         if (!persistBackup(parsed)) return;
         books = parsed.books;
         timer = parsed.timer;
-        readingDates = parsed.readingDates ?? [];
+        readingDates = [...new Set(parsed.readingDates ?? [])].sort();
+        readingSecondsByDate = parsed.readingSecondsByDate ?? {};
         palette = parsed.palette;
         applyPalette(palette);
         customization = {
@@ -1527,6 +1585,23 @@ function isBookStatus(value: string): value is BookStatus {
         renderStore();
       }
 
+      function renderDateSensitiveUI(): void {
+        getElement<HTMLElement>("today").textContent = new Intl.DateTimeFormat("es", {
+          weekday: "long", day: "numeric", month: "long"
+        }).format(new Date());
+        renderStats();
+        renderProgress();
+      }
+
+      function scheduleDateRefresh(): void {
+        const now = new Date();
+        const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 1);
+        window.setTimeout(() => {
+          renderDateSensitiveUI();
+          scheduleDateRefresh();
+        }, Math.max(1000, nextMidnight.getTime() - now.getTime()));
+      }
+
       function renderStats() {
         getElement<HTMLElement>("stat-total").textContent = String(books.length);
         getElement<HTMLElement>("sidebar-book-count").textContent = String(books.length);
@@ -1582,15 +1657,24 @@ function isBookStatus(value: string): value is BookStatus {
         elements.progressBooks.textContent = String(activeBooks);
         const streak = getReadingStreak();
         elements.progressStreak.textContent = `${streak.current} ${streak.current === 1 ? "día" : "días"}`;
-        elements.progressStreakDetail.textContent = `Tu mejor racha: ${streak.longest} ${streak.longest === 1 ? "día" : "días"} · mínimo 25 min`;
-        const week = new Set(readingDates);
+        elements.progressStreakDetail.textContent = `Tu mejor racha: ${streak.longest} ${streak.longest === 1 ? "día" : "días"} · meta diaria: 25 min`;
+        const streakDays = new Set(readingDates);
         const today = new Date();
         const dayItems: string[] = [];
         for (let offset = 6; offset >= 0; offset -= 1) {
           const date = new Date(today.getFullYear(), today.getMonth(), today.getDate() - offset);
           const key = getDateKey(date);
           const label = new Intl.DateTimeFormat("es", { weekday: "narrow" }).format(date);
-          dayItems.push(`<span class="streak-day${week.has(key) ? " is-active" : ""}" title="${new Intl.DateTimeFormat("es", { dateStyle: "medium" }).format(date)}"><span class="streak-dot" aria-hidden="true"></span><span>${label}</span></span>`);
+          const metGoal = streakDays.has(key);
+          const secondsRead = readingSecondsByDate[key] ?? 0;
+          const dayState = metGoal ? " is-active" : secondsRead > 0 ? " has-reading" : "";
+          const daySummary = metGoal
+            ? "Meta diaria cumplida"
+            : secondsRead > 0
+              ? `${secondsRead < 60 ? "Menos de 1 min" : formatReadingMinutes(secondsRead)} de 25 min`
+              : "Sin lectura registrada";
+          const accessibleLabel = `${new Intl.DateTimeFormat("es", { dateStyle: "full" }).format(date)}: ${daySummary}`;
+          dayItems.push(`<span class="streak-day${dayState}" title="${accessibleLabel}" aria-label="${accessibleLabel}"><span class="streak-dot" aria-hidden="true"></span><span>${label}</span></span>`);
         }
         elements.streakWeek.innerHTML = dayItems.join("");
         renderProgressChart(elements.hoursChart, "hours");
@@ -2707,7 +2791,7 @@ function isBookStatus(value: string): value is BookStatus {
           book.pagesRead = getBookPagesRead(book) + pagesReadThisSession;
           book.currentPage = endPage;
         }
-        if (seconds >= MIN_STREAK_SECONDS) registerReadingDay();
+        recordReadingTime(seconds);
         timer = null;
         elements.sessionDialog.close();
         saveBooks();
@@ -2728,16 +2812,18 @@ function isBookStatus(value: string): value is BookStatus {
         showToast("Sesión descartada.");
       });
 
-      getElement<HTMLElement>("today").textContent = new Intl.DateTimeFormat("es", {
-        weekday: "long", day: "numeric", month: "long"
-      }).format(new Date());
       renderSidebarMessage();
       setupSidebarMenu();
       setupScreenWakeLock();
       updateSidebarNavigation();
       window.addEventListener("hashchange", updateSidebarNavigation);
+      window.addEventListener("focus", renderDateSensitiveUI);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) renderDateSensitiveUI();
+      });
       setupPwa();
       render();
+      scheduleDateRefresh();
       void localizeSavedAuthors();
       window.setInterval(() => {
         if (timer?.startedAt !== null && timer) {
