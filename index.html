@@ -223,6 +223,7 @@
       border-radius: 11px;
       background: rgb(255 255 255 / 7%);
       color: var(--white);
+      text-decoration: none;
       font-size: 12px;
       font-weight: 600;
     }
@@ -240,6 +241,33 @@
       text-align: center;
     }
     .sidebar-link[aria-current="page"] .sidebar-count { background: rgb(57 37 30 / 12%); }
+    .sidebar-streak {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: auto;
+      margin-bottom: 10px;
+      padding: 12px;
+      border: 1px solid rgb(255 255 255 / 10%);
+      border-radius: 12px;
+      background: rgb(255 255 255 / 7%);
+      color: var(--white);
+    }
+    .sidebar-streak-icon {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--lime);
+      color: var(--green-dark);
+      font-size: 18px;
+      font-weight: 800;
+    }
+    .sidebar-streak-copy { min-width: 0; display: grid; gap: 2px; }
+    .sidebar-streak-copy strong { font-family: "Playfair Display", Georgia, serif; font-size: 14px; }
+    .sidebar-streak-copy small { color: rgb(255 254 250 / 62%); font-size: 9px; }
     .sidebar-note {
       position: relative;
       overflow: hidden;
@@ -802,7 +830,7 @@
     .progress-section-header .eyebrow { margin-bottom: 6px; }
     .progress-section-header h2 { margin: 0 0 5px; font-size: 27px; letter-spacing: -.5px; }
     .progress-section-intro { margin: 0; color: var(--muted); font-size: 12px; }
-    .progress-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; margin-bottom: 15px; }
+    .progress-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin-bottom: 15px; }
     .progress-summary-card {
       min-width: 0;
       min-height: 132px;
@@ -818,6 +846,11 @@
     .progress-summary-value { display: block; margin-bottom: 5px; font-family: "Playfair Display", Georgia, serif; font-size: clamp(24px, 3vw, 32px); line-height: 1; }
     .progress-summary-detail { color: var(--muted); font-size: 10px; }
     .progress-summary-card:first-child .progress-summary-detail { color: rgb(255 249 238 / 72%); }
+    .streak-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; margin-top: 10px; }
+    .streak-day { min-width: 0; display: grid; justify-items: center; gap: 4px; color: var(--muted); font-size: 8px; }
+    .streak-dot { width: 12px; height: 12px; border: 1px solid var(--line); border-radius: 50%; background: #eadfcf; }
+    .streak-day.is-active .streak-dot { border-color: var(--orange); background: linear-gradient(135deg, var(--orange), var(--lime)); box-shadow: 0 0 7px rgb(197 139 73 / 28%); }
+    .streak-day.is-active { color: var(--ink); font-weight: 700; }
     .progress-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
     .progress-chart-card { min-width: 0; padding: 21px 22px 17px; }
     .progress-chart-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 17px; }
@@ -1067,6 +1100,9 @@
       .sidebar { align-items: center; padding: 24px 10px 16px; }
       .sidebar-header { display: none; }
       .sidebar-brand-copy, .sidebar-section-label, .sidebar-note, .sidebar-link-label, .sidebar-count { display: none; }
+      .sidebar-streak { width: 48px; min-height: 48px; justify-content: center; margin: 14px auto 0; padding: 7px; }
+      .sidebar-streak-copy { display: none; }
+      .sidebar-streak-icon { width: 34px; height: 34px; }
       .sidebar-nav { width: 100%; gap: 9px; }
       .sidebar-link { width: 48px; justify-content: center; padding: 0; }
       .sidebar-link:hover { transform: none; }
@@ -1112,6 +1148,8 @@
       }
       .sidebar-section-label { display: block; }
       .sidebar-note { display: block; }
+      .sidebar-streak { width: auto; justify-content: flex-start; margin: auto 0 10px; padding: 12px; }
+      .sidebar-streak-copy { display: grid; }
       .sidebar-nav { width: 100%; grid-template-columns: 1fr; gap: 6px; margin: 0; padding: 0; }
       .sidebar-link { width: auto; min-width: 0; min-height: 47px; flex-direction: row; justify-content: flex-start; gap: 12px; padding: 0 12px; font-size: 12px; white-space: normal; }
       .sidebar-link svg { width: 18px; height: 18px; }
@@ -1129,8 +1167,8 @@
       .topbar { height: 66px; padding: 0 5vw; }
       main { width: 90vw; padding-top: 30px; }
       .today { display: none; }
-      .stats { width: 100%; }
-      .stat { min-width: 0; flex: 1; padding: 11px 10px; }
+      .stats { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .stat { min-width: 0; padding: 11px 10px; }
       .stat strong { font-size: 18px; }
       .timer-panel { min-height: 320px; }
       .form-panel { padding: 22px 20px; }
@@ -1222,6 +1260,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M12 3v12m-5-5 5 5 5-5M4 20h16"></path></svg>
         <span>Instalar app</span>
       </button>
+      <a class="sidebar-streak" href="#progress-view" aria-label="Racha de lectura">
+        <span class="sidebar-streak-icon" aria-hidden="true">🔥</span>
+        <span class="sidebar-streak-copy">
+          <strong id="sidebar-streak-count">0 días</strong>
+          <small>Racha · mínimo 25 min</small>
+        </span>
+      </a>
       <div class="sidebar-note">
         <span class="sidebar-note-icon" aria-hidden="true">✳</span>
         <strong id="sidebar-note-title">Un capítulo a la vez</strong>
@@ -1252,6 +1297,7 @@
         <div class="stat"><strong id="stat-total">0</strong><span>libros en total</span></div>
         <div class="stat"><strong id="stat-reading">0</strong><span>leyendo ahora</span></div>
         <div class="stat"><strong id="stat-hours">0h</strong><span>tiempo de lectura</span></div>
+        <div class="stat"><strong id="stat-streak">0 días</strong><span>racha actual</span></div>
       </div>
     </section>
 
@@ -1326,6 +1372,12 @@
           <span class="progress-summary-label">Libros con avance</span>
           <strong class="progress-summary-value" id="progress-active-books">0</strong>
           <span class="progress-summary-detail">Con tiempo o páginas anotadas</span>
+        </article>
+        <article class="progress-summary-card streak-summary-card">
+          <span class="progress-summary-label">Racha de lectura</span>
+          <strong class="progress-summary-value" id="progress-streak">0 días</strong>
+          <span class="progress-summary-detail" id="progress-streak-detail">Tu mejor racha: 0 días · mínimo 25 min</span>
+          <div class="streak-week" id="streak-week" aria-label="Actividad de lectura de los últimos siete días"></div>
         </article>
       </div>
       <div class="progress-chart-grid">
@@ -1590,9 +1642,9 @@
         </span>
         <div class="donation-copy">
           <p class="eyebrow">Gracias por apoyar este proyecto</p>
-          <h2>Apoya a DWGS en Ko-fi</h2>
+          <h2>Apoyar ayuda mucho.</h2>
           <p>Muchas gracias por tan siquiera abrir esta pestaña, yo soy un joven desarrollador que solamente busca explorar lenguajes de programación, para mí ya es un gran honor que tú, mi querido usuario, hayas decidido elegir mi aplicación sobre muchas otras que existen en la web. <br>
-            donar no es algo obligatorio, compartir esta app hace exactamente lo mismo y mucho más. Si aún decides donar, recuerda que con tenerte leyendo todo éste mensaje ya me has ayudado mucho.<br>Atte: "DWGS"</p>
+            Donar no es algo obligatorio, compartir esta app hace exactamente lo mismo y mucho más. Si aún decides donar, recuerda que con tenerte leyendo todo éste mensaje ya me has ayudado mucho.<br>Atte: "DWGS"</p>
           <a class="button button-primary donation-link" href="https://ko-fi.com/direworld" target="_blank" rel="noopener noreferrer">
             Apoyar en Ko-fi <span aria-hidden="true">↗</span>
           </a>
